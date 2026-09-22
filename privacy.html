@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Momentum AI — Privacy Information. Details regarding local data storage and user privacy.">
+    <title>Privacy Information — Momentum AI</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f766e">
+
+    <!-- Primary Font: IBM Plex Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <a href="index.html" class="brand-title" style="text-decoration: none;">Momentum AI</a>
+                <span class="brand-tagline">Privacy Policy</span>
+            </div>
+            <div class="header-actions">
+                <a href="index.html" class="btn btn-secondary">&larr; Back to App</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-main" style="max-width: 900px; margin: 0 auto; padding: var(--space-8) var(--space-4);">
+        <article class="card">
+            <h1 class="heading-display mb-md">Privacy Policy & Local Data Statement</h1>
+            <p class="text-secondary text-small mb-lg">Last updated: September 21, 2026 &bull; Version 1.0.0 (Phase 0)</p>
+
+            <div class="alert alert-info mb-lg">
+                <div class="alert-title">Notice & Product Information Disclaimer</div>
+                <div class="alert-body">
+                    This document provides accurate product information regarding data storage in Momentum AI Version 1. It is provided for informational purposes and does not constitute formal legal advice.
+                </div>
+            </div>
+
+            <section class="section-spacing">
+                <h2 class="heading-subheading mb-sm">1. Local-First Architecture</h2>
+                <p class="body-text mb-sm">
+                    Momentum AI Version 1 is designed as a local-first application. All data created within the application—including user profile information, goals, tasks, study logs, health entries, and settings—is stored directly in your browser's <code>LocalStorage</code>.
+                </p>
+                <p class="body-text">
+                    Your data remains on your device. Momentum AI does not transmit your personal records, execution metrics, or notes to external servers, cloud databases, or third-party tracking services in Version 1.
+                </p>
+            </section>
+
+            <section class="section-spacing">
+                <h2 class="heading-subheading mb-sm">2. Explicit Scope of Security & Storage</h2>
+                <p class="body-text mb-sm">To ensure complete transparency:</p>
+                <ul style="margin-left: var(--space-6); line-height: 1.8;" class="body-text text-secondary mb-sm">
+                    <li><strong>No Cloud Storage:</strong> Data is not synced to AWS, Google Cloud, or remote servers.</li>
+                    <li><strong>No Server-Side Encryption:</strong> Storage relies on your browser and operating system's native local storage mechanisms.</li>
+                    <li><strong>No Compliance Certifications:</strong> Version 1 does not claim formal GDPR, HIPAA, or ISO security compliance certifications.</li>
+                    <li><strong>User Control:</strong> You can inspect, export, or permanently erase your stored state at any time via the System State Inspector interface.</li>
+                </ul>
+            </section>
+
+            <section class="section-spacing">
+                <h2 class="heading-subheading mb-sm">3. LocalStorage & Browser Persistence</h2>
+                <p class="body-text mb-sm">
+                    Data stored in <code>LocalStorage</code> persists across browser sessions. However, clearing your browser cache, using private/incognito windows, or clearing site storage will remove your local data unless you have previously exported a JSON backup file.
+                </p>
+            </section>
+
+            <section class="section-spacing">
+                <h2 class="heading-subheading mb-sm">4. Future Versions</h2>
+                <p class="body-text">
+                    If future phases introduce optional cloud backup, synchronization, or AI features, explicit opt-in consent and updated privacy documentation will be provided prior to any data transmission.
+                </p>
+            </section>
+
+            <div class="mt-lg pt-md" style="border-top: 1px solid var(--color-border);">
+                <a href="index.html" class="btn btn-primary">&larr; Return to Momentum AI Application</a>
+            </div>
+        </article>
+    </main>
+
+    <footer class="app-footer">
+        <div class="footer-container">
+            <span>&copy; Momentum AI — Execution Over Intention</span>
+            <div class="footer-links">
+                <a href="index.html" class="footer-link">Home</a>
+                <a href="terms.html" class="footer-link">Terms of Service</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

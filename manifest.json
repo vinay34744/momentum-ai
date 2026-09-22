@@ -1,0 +1,24 @@
+{
+  "name": "Momentum AI",
+  "short_name": "Momentum",
+  "description": "Execution Over Intention — Serious personal execution, study planner, and behavioral analysis engine.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#121316",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

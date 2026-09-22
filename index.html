@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Momentum AI — Execution Over Intention. A serious, practical engine for personal execution, study planning, habit tracking, and behavioral analysis.">
+    <title>Momentum AI — Execution Over Intention</title>
+    
+    <!-- PWA Web Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f766e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Primary Font: IBM Plex Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Top Global App Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <a href="#view-landing" class="brand-title-link" id="brand-link">
+                    <span class="brand-title">Momentum AI</span>
+                    <span class="brand-tagline">Execution Over Intention</span>
+                </a>
+            </div>
+
+            <nav class="header-nav-public" id="header-nav-public" aria-label="Public Navigation">
+                <a href="#section-problem" class="nav-public-link">The Problem</a>
+                <a href="#section-how-it-works" class="nav-public-link">How It Works</a>
+                <a href="#section-what-we-track" class="nav-public-link">What We Track</a>
+            </nav>
+
+            <div class="header-actions">
+                <span class="phase-badge" id="phase-badge">Phase 6 Active</span>
+                
+                <!-- Returning User Profile Badge (Hidden on landing if onboarding incomplete) -->
+                <div id="user-profile-badge" class="user-badge hidden">
+                    <span id="badge-user-name" class="user-badge-name">User</span>
+                    <button id="btn-edit-onboarding" class="btn btn-secondary text-caption" style="padding: 2px 8px;">Edit Setup</button>
+                </div>
+
+                <div class="theme-selector">
+                    <label for="theme-select" class="sr-only">Select Theme</label>
+                    <select id="theme-select" class="theme-dropdown" aria-label="Select Theme">
+                        <option value="system">Theme: System</option>
+                        <option value="light">Theme: Light</option>
+                        <option value="dark">Theme: Dark</option>
+                    </select>
+                </div>
+
+                <button id="btn-header-cta" class="btn btn-primary btn-cta-start">Start Momentum</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div id="app-viewport">
+
+        <!-- ====================================================================
+             1. PUBLIC LANDING PAGE (Shown for First-Time Users)
+             ==================================================================== -->
+        <div id="view-landing" class="landing-view">
+            <!-- Hero Section -->
+            <section class="landing-hero">
+                <div class="landing-container">
+                    <div class="hero-content">
+                        <span class="hero-subtitle">Execution Over Intention</span>
+                        <h1 class="heading-display hero-title">Planning is easy.<br>Execution is where systems break.</h1>
+                        <p class="body-text hero-description">
+                            Most people can make schedules, to-do lists, and reminders. The real problem is consistently executing them when motivation fades. Momentum AI tracks what you planned, what you actually completed, what you missed, and why—helping you build a realistic execution system grounded in data.
+                        </p>
+                        <div class="hero-actions">
+                            <button class="btn btn-primary btn-cta-start hero-btn-main">Start Momentum &rarr;</button>
+                            <a href="#section-how-it-works" class="btn btn-secondary hero-btn-sub">How it works</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- The Problem Section -->
+            <section id="section-problem" class="landing-section">
+                <div class="landing-container">
+                    <div class="section-heading-wrapper">
+                        <h2 class="heading-heading">The Problem With Traditional Productivity</h2>
+                        <p class="text-secondary">Why conventional tools fail when life gets unpredictable.</p>
+                    </div>
+
+                    <div class="grid grid-3 gap-lg">
+                        <article class="card feature-card">
+                            <div class="card-caption">Problem 01</div>
+                            <h3 class="heading-subheading mb-sm">Overestimating Available Time</h3>
+                            <p class="body-text text-secondary text-small">
+                                People design schedules assuming 100% energy and zero interruptions. When reality intervenes, the entire plan collapses, leading to frustration and abandoned goals.
+                            </p>
+                        </article>
+
+                        <article class="card feature-card">
+                            <div class="card-caption">Problem 02</div>
+                            <h3 class="heading-subheading mb-sm">Unexplained Missed Tasks</h3>
+                            <p class="body-text text-secondary text-small">
+                                When tasks are missed, standard apps simply push them to tomorrow or mark them red. They never ask <em>why</em> the task was missed or how to adjust future workloads realistically.
+                            </p>
+                        </article>
+
+                        <article class="card feature-card">
+                            <div class="card-caption">Problem 03</div>
+                            <h3 class="heading-subheading mb-sm">Motivation vs. Consistency</h3>
+                            <p class="body-text text-secondary text-small">
+                                Relying on peak emotional motivation creates a cycle of intense bursts followed by total burnout. Sustainable progress requires consistent, manageable execution.
+                            </p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How Momentum Works Section -->
+            <section id="section-how-it-works" class="landing-section alt-bg">
+                <div class="landing-container">
+                    <div class="section-heading-wrapper">
+                        <h2 class="heading-heading">How Momentum AI Works</h2>
+                        <p class="text-secondary">A closed-loop execution system designed around human reality.</p>
+                    </div>
+
+                    <div class="execution-loop-container card">
+                        <div class="loop-grid">
+                            <div class="loop-card">
+                                <span class="loop-step-tag">01. Plan</span>
+                                <h4 class="heading-subheading text-small">Set Realistic Intentions</h4>
+                                <p class="text-secondary text-caption">Schedule tasks and goals based on actual historical capacity, not wishful thinking.</p>
+                            </div>
+                            <div class="loop-card">
+                                <span class="loop-step-tag">02. Execute</span>
+                                <h4 class="heading-subheading text-small">Focus &amp; Action</h4>
+                                <p class="text-secondary text-caption">Engage in focused work sessions and log progress accurately.</p>
+                            </div>
+                            <div class="loop-card">
+                                <span class="loop-step-tag">03. Record</span>
+                                <h4 class="heading-subheading text-small">Log Completion / Miss</h4>
+                                <p class="text-secondary text-caption">Honestly capture completed items or mark missed tasks without penalty.</p>
+                            </div>
+                            <div class="loop-card">
+                                <span class="loop-step-tag">04. Understand</span>
+                                <h4 class="heading-subheading text-small">Capture Reasons</h4>
+                                <p class="text-secondary text-caption">Record reflection notes on why delays happened (fatigue, poor estimates, emergencies).</p>
+                            </div>
+                            <div class="loop-card">
+                                <span class="loop-step-tag">05. Adapt</span>
+                                <h4 class="heading-subheading text-small">Calibrate Systems</h4>
+                                <p class="text-secondary text-caption">Use actual execution data to refine future schedules and goal deadlines.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- What Momentum Tracks Section -->
+            <section id="section-what-we-track" class="landing-section">
+                <div class="landing-container">
+                    <div class="section-heading-wrapper">
+                        <h2 class="heading-heading">Built Progressively Around Your Real Execution Data</h2>
+                        <p class="text-secondary">Phase 1 establishes your profile and core goals. Future phases expand tracking across your workflow.</p>
+                    </div>
+
+                    <div class="grid grid-2 gap-lg">
+                        <div class="card">
+                            <span class="nav-tag mb-xs inline-block">Active In Phase 1</span>
+                            <h3 class="heading-subheading mb-sm">Profile &amp; Goal Foundations</h3>
+                            <ul class="track-list text-secondary text-small">
+                                <li><strong>User Profile:</strong> Name, user type, daily focus availability, and daily routine.</li>
+                                <li><strong>Initial Goal Setup:</strong> Concrete goal targets, categories, deadlines, and priorities.</li>
+                                <li><strong>Local Storage Engine:</strong> 100% private local-first data persistence.</li>
+                            </ul>
+                        </div>
+
+                        <div class="card" style="opacity: 0.85;">
+                            <span class="nav-tag mb-xs inline-block">Upcoming Progressive Roadmap</span>
+                            <h3 class="heading-subheading mb-sm">Future Execution Modules</h3>
+                            <ul class="track-list text-secondary text-small">
+                                <li><strong>Tasks &amp; Accountability:</strong> Reason logging for missed tasks (Phase 1+).</li>
+                                <li><strong>Study &amp; Focus Sessions:</strong> Subject planners and timers (Phase 2).</li>
+                                <li><strong>Wellness &amp; Health Logs:</strong> Sleep, hydration, exercise, and mood correlation (Phase 3).</li>
+                                <li><strong>Behavioral Analytics:</strong> Execution index trends and pattern analysis (Phase 4).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Philosophy Section -->
+            <section id="section-philosophy" class="landing-section alt-bg">
+                <div class="landing-container text-center max-w-700">
+                    <h2 class="heading-heading mb-md">Designed Around Reality, Not Punishment</h2>
+                    <p class="body-text text-secondary mb-lg">
+                        A missed task is not a moral failure—it is a data point. Momentum AI helps you adjust your system so tomorrow's plan is built on yesterday's reality.
+                    </p>
+                    <button class="btn btn-primary btn-cta-start">Start Momentum &rarr;</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- ====================================================================
+             2. MULTI-STEP ONBOARDING WIZARD
+             ==================================================================== -->
+        <div id="view-onboarding" class="onboarding-view hidden">
+            <div class="onboarding-wrapper">
+                
+                <!-- Onboarding Header & Progress Bar -->
+                <div class="onboarding-header">
+                    <div class="flex-header mb-xs">
+                        <span id="onboarding-step-indicator" class="text-caption text-muted">Step 1 of 6</span>
+                        <button id="btn-cancel-onboarding" class="btn-link text-caption text-muted">Exit Onboarding</button>
+                    </div>
+                    <div class="progress-bar-track" aria-hidden="true">
+                        <div id="onboarding-progress-fill" class="progress-bar-fill" style="width: 16.66%;"></div>
+                    </div>
+                </div>
+
+                <!-- Step Form Card Container -->
+                <div class="card onboarding-card">
+                    
+                    <!-- STEP 1: Basic Profile -->
+                    <div id="onboard-step-1" class="onboard-step active">
+                        <h2 class="heading-heading mb-xs">What should Momentum call you?</h2>
+                        <p class="text-secondary text-small mb-md">Enter your name or preferred title for your personal execution workspace.</p>
+                        
+                        <div class="form-group">
+                            <label for="input-profile-name" class="form-label">Your Name <span class="text-error">*</span></label>
+                            <input type="text" id="input-profile-name" class="form-input" placeholder="e.g. Alex Morgan" maxlength="40" required autocomplete="name">
+                            <div id="error-step-1" class="form-error-inline hidden">Please enter your name to proceed.</div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: User Type -->
+                    <div id="onboard-step-2" class="onboard-step hidden">
+                        <h2 class="heading-heading mb-xs">What are you mainly using Momentum for?</h2>
+                        <p class="text-secondary text-small mb-md">Select your primary role to customize your execution framework.</p>
+
+                        <div class="option-grid gap-sm" id="user-type-options">
+                            <button type="button" class="option-card" data-value="Student">
+                                <span class="option-title">Student</span>
+                                <span class="option-desc">Preparing for exams, coursework, or structured study schedules.</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="Working Professional">
+                                <span class="option-title">Working Professional</span>
+                                <span class="option-desc">Managing daily work tasks, deadlines, and professional growth.</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="Freelancer">
+                                <span class="option-title">Freelancer</span>
+                                <span class="option-desc">Balancing client projects, self-directed time, and billing.</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="Entrepreneur">
+                                <span class="option-title">Entrepreneur</span>
+                                <span class="option-desc">Building products, operations, and strategic company goals.</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="Other">
+                                <span class="option-title">Other</span>
+                                <span class="option-desc">General personal productivity and habit execution.</span>
+                            </button>
+                        </div>
+                        <div id="error-step-2" class="form-error-inline hidden">Please select a user type to proceed.</div>
+                    </div>
+
+                    <!-- STEP 3: Primary Goal Focus -->
+                    <div id="onboard-step-3" class="onboard-step hidden">
+                        <h2 class="heading-heading mb-xs">What do you want Momentum to help you execute consistently?</h2>
+                        <p class="text-secondary text-small mb-md">Select your main focus category or enter a custom objective.</p>
+
+                        <div class="option-grid gap-sm mb-md" id="primary-goal-options">
+                            <button type="button" class="option-card" data-value="Study">
+                                <span class="option-title">Study &amp; Academic Focus</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="Work">
+                                <span class="option-title">Work &amp; Career Projects</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="Fitness">
+                                <span class="option-title">Fitness &amp; Health Routines</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="Personal">
+                                <span class="option-title">Personal Growth &amp; Skills</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="Custom">
+                                <span class="option-title">Custom Objective</span>
+                            </button>
+                        </div>
+
+                        <div id="custom-goal-wrapper" class="form-group hidden">
+                            <label for="input-custom-goal" class="form-label">Specify Custom Objective</label>
+                            <input type="text" id="input-custom-goal" class="form-input" placeholder="e.g. Master Data Structures in 90 Days" maxlength="60">
+                        </div>
+                        <div id="error-step-3" class="form-error-inline hidden">Please select or specify your primary objective.</div>
+                    </div>
+
+                    <!-- STEP 4: Available Daily Time -->
+                    <div id="onboard-step-4" class="onboard-step hidden">
+                        <h2 class="heading-heading mb-xs">How much focused time can you realistically give each day?</h2>
+                        <p class="text-secondary text-small mb-md">Be honest. Setting realistic time capacity prevents schedule collapse.</p>
+
+                        <div class="option-grid gap-sm" id="available-time-options">
+                            <button type="button" class="option-card" data-value="Less than 1 hour">
+                                <span class="option-title">Less than 1 hour / day</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="1-2 hours">
+                                <span class="option-title">1 – 2 hours / day</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="2-4 hours">
+                                <span class="option-title">2 – 4 hours / day</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="4-6 hours">
+                                <span class="option-title">4 – 6 hours / day</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="6+ hours">
+                                <span class="option-title">6+ hours / day</span>
+                            </button>
+                            <button type="button" class="option-card" data-value="Different schedule each day">
+                                <span class="option-title">Varies / Different schedule each day</span>
+                            </button>
+                        </div>
+                        <div id="error-step-4" class="form-error-inline hidden">Please select your available daily focus time.</div>
+                    </div>
+
+                    <!-- STEP 5: Daily Routine -->
+                    <div id="onboard-step-5" class="onboard-step hidden">
+                        <h2 class="heading-heading mb-xs">Your Typical Daily Routine</h2>
+                        <p class="text-secondary text-small mb-md">This baseline helps align future task reminders with your natural wake/sleep cycle.</p>
+
+                        <div class="grid grid-2 gap-md mb-md">
+                            <div class="form-group">
+                                <label for="input-wake-time" class="form-label">Typical Wake-Up Time</label>
+                                <input type="time" id="input-wake-time" class="form-input" value="07:00">
+                            </div>
+                            <div class="form-group">
+                                <label for="input-sleep-time" class="form-label">Typical Bedtime</label>
+                                <input type="time" id="input-sleep-time" class="form-input" value="23:00">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">When do you usually have your most usable focused time?</label>
+                            <div class="option-grid gap-xs grid-4" id="peak-focus-options">
+                                <button type="button" class="option-card text-center" data-value="Morning">Morning</button>
+                                <button type="button" class="option-card text-center" data-value="Afternoon">Afternoon</button>
+                                <button type="button" class="option-card text-center" data-value="Evening">Evening</button>
+                                <button type="button" class="option-card text-center" data-value="It varies">It varies</button>
+                            </div>
+                        </div>
+                        <div id="error-step-5" class="form-error-inline hidden">Please complete your routine details.</div>
+                    </div>
+
+                    <!-- STEP 6: Initial Concrete Goal -->
+                    <div id="onboard-step-6" class="onboard-step hidden">
+                        <h2 class="heading-heading mb-xs">Create Your First Concrete Goal</h2>
+                        <p class="text-secondary text-small mb-md">Set an initial goal you intend to work on starting today.</p>
+
+                        <div class="form-group mb-sm">
+                            <label for="input-goal-title" class="form-label">Goal Name <span class="text-error">*</span></label>
+                            <input type="text" id="input-goal-title" class="form-input" placeholder="e.g. Complete Organic Chemistry Chapter 3" maxlength="80" required>
+                        </div>
+
+                        <div class="grid grid-2 gap-md mb-sm">
+                            <div class="form-group">
+                                <label for="select-goal-category" class="form-label">Category</label>
+                                <select id="select-goal-category" class="form-select">
+                                    <option value="Study">Study</option>
+                                    <option value="Work">Work</option>
+                                    <option value="Projects">Projects</option>
+                                    <option value="Fitness">Fitness</option>
+                                    <option value="Personal">Personal</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="select-goal-priority" class="form-label">Priority</label>
+                                <select id="select-goal-priority" class="form-select">
+                                    <option value="High">High Priority</option>
+                                    <option value="Medium" selected>Medium Priority</option>
+                                    <option value="Low">Low Priority</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-2 gap-md">
+                            <div class="form-group">
+                                <label for="input-goal-target" class="form-label">Target Metric (Optional)</label>
+                                <input type="text" id="input-goal-target" class="form-input" placeholder="e.g. 50 Practice Questions or 10 Hours">
+                            </div>
+                            <div class="form-group">
+                                <label for="input-goal-deadline" class="form-label">Target Deadline (Optional)</label>
+                                <input type="date" id="input-goal-deadline" class="form-input">
+                            </div>
+                        </div>
+                        <div id="error-step-6" class="form-error-inline hidden">Please enter a goal name to proceed.</div>
+                    </div>
+
+                    <!-- STEP 7: REVIEW SCREEN -->
+                    <div id="onboard-step-review" class="onboard-step hidden">
+                        <h2 class="heading-heading mb-xs">Your Momentum Setup Review</h2>
+                        <p class="text-secondary text-small mb-md">Review your profile choices before entering your workspace.</p>
+
+                        <div class="review-table-card mb-md">
+                            <div class="review-row">
+                                <span class="review-label">Name:</span>
+                                <span id="rev-name" class="review-value">-</span>
+                            </div>
+                            <div class="review-row">
+                                <span class="review-label">User Type:</span>
+                                <span id="rev-usertype" class="review-value">-</span>
+                            </div>
+                            <div class="review-row">
+                                <span class="review-label">Primary Objective:</span>
+                                <span id="rev-objective" class="review-value">-</span>
+                            </div>
+                            <div class="review-row">
+                                <span class="review-label">Available Focus Time:</span>
+                                <span id="rev-available-time" class="review-value">-</span>
+                            </div>
+                            <div class="review-row">
+                                <span class="review-label">Daily Routine:</span>
+                                <span id="rev-routine" class="review-value">-</span>
+                            </div>
+                            <div class="review-row">
+                                <span class="review-label">Initial Goal:</span>
+                                <span id="rev-initial-goal" class="review-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Onboarding Navigation Buttons -->
+                    <div class="onboarding-nav-buttons mt-md">
+                        <button type="button" id="btn-onboard-back" class="btn btn-secondary hidden">&larr; Back</button>
+                        <button type="button" id="btn-onboard-next" class="btn btn-primary ml-auto">Continue &rarr;</button>
+                        <button type="button" id="btn-onboard-finish" class="btn btn-primary ml-auto hidden">Finish Setup &amp; Start &rarr;</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             3. MAIN APPLICATION AREA (Post-Onboarding Workspace Shell)
+             ==================================================================== -->
+        <div id="app-shell" class="app-body-wrapper hidden">
+            
+            <div class="app-body">
+                <nav class="app-nav" aria-label="Main Navigation">
+                    <ul class="nav-list">
+                        <li><button class="nav-btn active" data-view="dashboard" aria-current="page">Dashboard</button></li>
+                        <li><button class="nav-btn" data-view="tasks" data-phase="3">Tasks <span class="nav-tag">Phase 3</span></button></li>
+                        <li><button class="nav-btn" data-view="foundation">System Foundation</button></li>
+                        <li><button class="nav-btn" data-view="today" data-phase="3">Today <span class="nav-tag">Phase 3</span></button></li>
+                        <li><button class="nav-btn" data-view="study" data-phase="6">Study <span class="nav-tag">Phase 6</span></button></li>
+                        <li><button class="nav-btn" data-view="wellness" data-phase="8">Wellness <span class="nav-tag">Phase 8</span></button></li>
+                        <li><button class="nav-btn" data-view="analytics" data-phase="11">Analytics <span class="nav-tag">Phase 11</span></button></li>
+                        <li><button class="nav-btn" data-view="aicoach" data-phase="9">AI Coach <span class="nav-tag">Phase 9</span></button></li>
+                        <li><button class="nav-btn" data-view="settings" data-phase="13">Settings <span class="nav-tag">Phase 13</span></button></li>
+                    </ul>
+                </nav>
+
+                <main id="main-content" class="app-main">
+                    
+                    <!-- ====================================================================
+                         PHASE 2 DASHBOARD VIEW
+                         ==================================================================== -->
+                    <section id="view-dashboard" class="view-panel active">
+                        
+                        <!-- 1. Dashboard Header (Greeting & Local Date) -->
+                        <div class="panel-header section-spacing">
+                            <div>
+                                <h1 class="heading-display" id="dash-greeting">Good morning, User</h1>
+                                <p class="text-secondary body-text mt-xs" id="dash-tagline">Here’s what needs your attention today.</p>
+                            </div>
+                            <div class="status-indicator-online" id="dash-date-badge">
+                                <span class="dot"></span> <span id="dash-current-date">Today</span>
+                            </div>
+                        </div>
+
+                        <!-- 2. Current Primary Focus Card -->
+                        <section class="card section-spacing" id="dash-current-focus-card">
+                            <div class="card-caption mb-xs">Current Primary Focus</div>
+                            <div class="flex-header mb-xs">
+                                <div>
+                                    <h2 class="heading-heading" id="dash-focus-title">Build consistent execution</h2>
+                                    <p class="text-secondary text-small mt-xs" id="dash-focus-meta">Category: General Objective • Priority: Medium</p>
+                                </div>
+                                <span class="nav-tag" id="dash-focus-badge">Active Focus</span>
+                            </div>
+                            <div id="dash-focus-target-wrapper" class="mt-md pt-sm" style="border-top: 1px solid var(--color-border);">
+                                <span class="text-caption text-muted block mb-xs">Target Metric &amp; Deadline:</span>
+                                <div class="text-small text-primary" id="dash-focus-target-text">No target metric set</div>
+                            </div>
+                        </section>
+
+                        <!-- 3. Today Overview Metrics Grid -->
+                        <section class="section-spacing">
+                            <h2 class="heading-subheading mb-sm">Today Overview</h2>
+                            <div class="grid grid-4 gap-md">
+                                <article class="card">
+                                    <div class="card-caption">Planned Tasks</div>
+                                    <div class="card-value" id="dash-stat-planned">0</div>
+                                    <div class="card-subtext" id="dash-stat-planned-sub">Scheduled for today</div>
+                                </article>
+
+                                <article class="card">
+                                    <div class="card-caption">Completed Tasks</div>
+                                    <div class="card-value" id="dash-stat-completed">0</div>
+                                    <div class="card-subtext" id="dash-stat-completed-sub">Finished today</div>
+                                </article>
+
+                                <article class="card">
+                                    <div class="card-caption">Missed Tasks</div>
+                                    <div class="card-value" id="dash-stat-missed">0</div>
+                                    <div class="card-subtext" id="dash-stat-missed-sub">Unfinished / delayed</div>
+                                </article>
+
+                                <article class="card">
+                                    <div class="card-caption">Focused Time</div>
+                                    <div class="card-value" id="dash-stat-focused">0m</div>
+                                    <div class="card-subtext" id="dash-stat-focused-sub">Logged focus sessions</div>
+                                </article>
+                            </div>
+                        </section>
+
+                        <!-- 4. Today's Execution Area (Tasks Preview) -->
+                        <section class="card section-spacing" id="dash-today-execution-card">
+                            <div class="flex-header mb-sm">
+                                <div>
+                                    <h2 class="heading-subheading">Today’s Execution</h2>
+                                    <p class="text-secondary text-small">Tasks scheduled for your current day</p>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:var(--space-2);">
+                                    <span class="nav-tag" id="dash-today-count-tag">0 Tasks</span>
+                                    <button id="dash-btn-add-task" class="btn btn-primary" style="padding:var(--space-1) var(--space-3);font-size:var(--font-size-caption);">+ Add Task</button>
+                                </div>
+                            </div>
+
+                            <div id="dash-today-tasks-container" class="mt-sm">
+                                <!-- Populated dynamically via script.js -->
+                            </div>
+                        </section>
+
+                        <!-- 5. Active Goals Section -->
+                        <section class="card section-spacing" id="dash-goals-card">
+                            <div class="flex-header mb-sm">
+                                <div>
+                                    <h2 class="heading-subheading">Your Active Goals</h2>
+                                    <p class="text-secondary text-small">Objectives established in your execution workspace</p>
+                                </div>
+                                <button id="dash-btn-edit-profile" class="btn btn-secondary text-caption" style="padding: 2px 8px;">Edit Setup</button>
+                            </div>
+
+                            <div id="dash-goals-list-container" class="mt-sm">
+                                <!-- Populated dynamically via script.js -->
+                            </div>
+                        </section>
+
+                        <!-- 5. Today's Schedule (Phase 6 Timetable) -->
+                        <section class="card section-spacing" id="dash-schedule-card">
+                            <div class="flex-header mb-sm">
+                                <div>
+                                    <h2 class="heading-subheading">Today&#8217;s Schedule</h2>
+                                    <p class="text-secondary text-small">Your timetable for today</p>
+                                </div>
+                                <button id="dash-btn-goto-study" class="btn btn-secondary" style="padding:var(--space-1) var(--space-3);font-size:var(--font-size-caption);">View timetable</button>
+                            </div>
+                            <!-- Next class indicator -->
+                            <div id="dash-schedule-next" class="dash-schedule-next mb-sm">
+                                <!-- Populated dynamically -->
+                            </div>
+                            <!-- Today entries list -->
+                            <div id="dash-schedule-container">
+                                <!-- Populated dynamically via script.js -->
+                            </div>
+                        </section>
+
+                        <!-- 6. Future Intelligence / Behavioral Analysis Preview -->
+                        <section class="card section-spacing">
+                            <span class="nav-tag mb-xs inline-block">Future Behavioral Intelligence</span>
+                            <h2 class="heading-subheading mb-xs">Momentum learns from your real execution</h2>
+                            <p class="body-text text-secondary text-small mb-sm">
+                                As you log daily work, study sessions, and task reflections over time, Momentum AI will analyze workload capacity, identify recurring delay triggers, and recommend calibrated schedules based on your historical consistency patterns.
+                            </p>
+                            <div class="alert alert-info text-caption mb-0" style="padding: var(--space-3);">
+                                <strong>Status:</strong> Execution data collection active. Machine intelligence insights will calibrate progressive analysis in Phase 4+.
+                            </div>
+                        </section>
+
+                        <!-- 7. State Inspector Quick Entry -->
+                        <section class="card section-spacing">
+                            <div class="flex-header">
+                                <div>
+                                    <h2 class="heading-subheading">Data Storage &amp; System State</h2>
+                                    <p class="text-secondary text-small">State schema v1.1.0 local-first browser storage</p>
+                                </div>
+                                <button id="dash-btn-view-inspector" class="btn btn-secondary">View State Inspector &rarr;</button>
+                            </div>
+                        </section>
+                    </section>
+
+                    <!-- ====================================================================
+                         PHASE 3 TASK PLANNER VIEW
+                         ==================================================================== -->
+                    <section id="view-tasks" class="view-panel hidden">
+                        <!-- Panel Header -->
+                        <div class="panel-header section-spacing">
+                            <div>
+                                <h1 class="heading-display">Task Planner</h1>
+                                <p class="text-secondary body-text mt-xs">Schedule, manage, and execute your planned tasks.</p>
+                            </div>
+                            <div>
+                                <button id="btn-add-task" class="btn btn-primary">+ Add Task</button>
+                            </div>
+                        </div>
+
+                        <!-- Date Navigation & Preset Controls -->
+                        <div class="card section-spacing">
+                            <div class="task-controls-wrapper">
+                                <!-- Date Filter Tabs -->
+                                <div class="task-date-tabs" role="tablist" aria-label="Task Date Selection">
+                                    <button class="tab-btn active" data-date-preset="today" role="tab" aria-selected="true">Today</button>
+                                    <button class="tab-btn" data-date-preset="tomorrow" role="tab" aria-selected="false">Tomorrow</button>
+                                    <button class="tab-btn" data-date-preset="upcoming" role="tab" aria-selected="false">Upcoming</button>
+                                    <button class="tab-btn" data-date-preset="all" role="tab" aria-selected="false">All Tasks</button>
+                                </div>
+
+                                <!-- Custom Date Selector & Status Filter -->
+                                <div class="task-filter-group">
+                                    <div class="form-group inline-form-group">
+                                        <label for="task-date-picker" class="sr-only">Specific Date</label>
+                                        <input type="date" id="task-date-picker" class="form-input form-input-sm" aria-label="Select Specific Date">
+                                    </div>
+
+                                    <div class="form-group inline-form-group">
+                                        <label for="task-status-filter" class="sr-only">Filter by Status</label>
+                                        <select id="task-status-filter" class="form-input form-input-sm" aria-label="Filter Tasks by Status">
+                                            <option value="all">Status: All</option>
+                                            <option value="planned">Planned</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="missed">Missed</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group inline-form-group">
+                                        <label for="task-search-input" class="sr-only">Search Tasks</label>
+                                        <input type="text" id="task-search-input" class="form-input form-input-sm" placeholder="Search tasks..." aria-label="Search Tasks">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Task List Container -->
+                        <section class="card section-spacing">
+                            <div class="flex-header mb-md">
+                                <h2 class="heading-subheading" id="tasks-view-heading">Today’s Tasks</h2>
+                                <span class="nav-tag" id="tasks-count-badge">0 Tasks</span>
+                            </div>
+
+                            <div id="task-list-container" class="task-list">
+                                <!-- Populated dynamically via script.js -->
+                            </div>
+                        </section>
+                    </section>
+
+                    <!-- View: System Foundation (Phase 0 Inspector) -->
+                    <section id="view-foundation" class="view-panel hidden">
+                        <div class="panel-header">
+                            <div>
+                                <h1 class="heading-display">System Foundation Status</h1>
+                                <p class="text-secondary">Phase 0/1 Architectural Verification and Central State Inspector</p>
+                            </div>
+                        </div>
+
+                        <!-- System Metrics Cards Grid -->
+                        <div class="grid grid-4 gap-md section-spacing">
+                            <article class="card">
+                                <div class="card-caption">Schema Version</div>
+                                <div class="card-value" id="stat-schema-version">1.0.0</div>
+                                <div class="card-subtext">Migration pipeline active</div>
+                            </article>
+
+                            <article class="card">
+                                <div class="card-caption">Storage Engine</div>
+                                <div class="card-value" id="stat-storage-status">LocalStorage</div>
+                                <div class="card-subtext" id="stat-storage-key">Key: momentumAI</div>
+                            </article>
+
+                            <article class="card">
+                                <div class="card-caption">Service Worker</div>
+                                <div class="card-value" id="stat-sw-status">Checking...</div>
+                                <div class="card-subtext" id="stat-sw-detail">Offline Cache ready</div>
+                            </article>
+
+                            <article class="card">
+                                <div class="card-caption">Entity Records</div>
+                                <div class="card-value" id="stat-total-records">0</div>
+                                <div class="card-subtext">Across 12 data domain collections</div>
+                            </article>
+                        </div>
+
+                        <!-- Central Product Loop Architecture -->
+                        <section class="card section-spacing">
+                            <h2 class="heading-subheading">Central Product Execution Loop</h2>
+                            <p class="text-secondary body-text">Momentum AI is built around a closed-loop execution architecture to bridge the gap between planning and completion.</p>
+
+                            <div class="execution-loop-diagram">
+                                <div class="loop-step">
+                                    <span class="step-num">01</span>
+                                    <span class="step-name">Plan</span>
+                                </div>
+                                <div class="loop-arrow">&rarr;</div>
+                                <div class="loop-step">
+                                    <span class="step-num">02</span>
+                                    <span class="step-name">Reminder</span>
+                                </div>
+                                <div class="loop-arrow">&rarr;</div>
+                                <div class="loop-step">
+                                    <span class="step-num">03</span>
+                                    <span class="step-name">Execute</span>
+                                </div>
+                                <div class="loop-arrow">&rarr;</div>
+                                <div class="loop-step">
+                                    <span class="step-num">04</span>
+                                    <span class="step-name">Complete / Miss</span>
+                                </div>
+                                <div class="loop-arrow">&rarr;</div>
+                                <div class="loop-step">
+                                    <span class="step-num">05</span>
+                                    <span class="step-name">Explain</span>
+                                </div>
+                                <div class="loop-arrow">&rarr;</div>
+                                <div class="loop-step">
+                                    <span class="step-num">06</span>
+                                    <span class="step-name">Analyze</span>
+                                </div>
+                                <div class="loop-arrow">&rarr;</div>
+                                <div class="loop-step">
+                                    <span class="step-num">07</span>
+                                    <span class="step-name">Adapt</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Data Schema Collections Overview -->
+                        <section class="grid grid-2 gap-lg section-spacing">
+                            <article class="card">
+                                <h2 class="heading-subheading">Data Domain Collections</h2>
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Collection</th>
+                                                <th>Entity Schema</th>
+                                                <th>Count</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="domain-collections-tbody">
+                                            <!-- Populated via script.js -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </article>
+
+                            <article class="card">
+                                <h2 class="heading-subheading">Goal-Specific Presets Configuration</h2>
+                                <p class="text-secondary text-small mb-md">Architectural configurations ready for onboarding (JEE, NEET, KCET, UPSC):</p>
+                                <div id="presets-list" class="presets-container">
+                                    <!-- Populated via script.js -->
+                                </div>
+                            </article>
+                        </section>
+
+                        <!-- Storage & State Management Inspector -->
+                        <section class="card section-spacing">
+                            <div class="flex-header">
+                                <div>
+                                    <h2 class="heading-subheading">State Inspector &amp; Operations</h2>
+                                    <p class="text-secondary text-small">Inspect serialized LocalStorage state or perform state management actions.</p>
+                                </div>
+                                <div class="btn-group">
+                                    <button id="btn-export-json" class="btn btn-secondary">Export State JSON</button>
+                                    <button id="btn-reset-state" class="btn btn-danger">Reset State</button>
+                                </div>
+                            </div>
+
+                            <div class="state-preview-wrapper mt-md">
+                                <label for="state-json-inspector" class="text-small text-muted mb-xs block">Serialized State JSON (Read-Only Inspector):</label>
+                                <textarea id="state-json-inspector" class="code-textarea" readonly rows="10" aria-label="Serialized State JSON"></textarea>
+                            </div>
+                        </section>
+                    </section>
+
+                    <!-- Placeholder View Container for Unbuilt Modules -->
+                    <section id="view-placeholder" class="view-panel hidden">
+                        <div class="empty-state">
+                            <div class="empty-title" id="placeholder-title">Module Pending Phase Rollout</div>
+                            <p class="empty-description" id="placeholder-desc">
+                                This module is scheduled for development in a future phase. Phase 1 provides the landing page, multi-step onboarding wizard, profile persistence, and goal setup.
+                            </p>
+                            <button id="btn-back-foundation" class="btn btn-primary mt-md">Return to Workspace</button>
+                        </div>
+                    </section>
+
+                    <!-- ====================================================================
+                         PHASE 6 — STUDENT MODE & TIMETABLE VIEW
+                         ==================================================================== -->
+                    <section id="view-study" class="view-panel hidden" aria-label="Student Mode">
+
+                        <!-- Student Mode Header -->
+                        <div class="panel-header section-spacing">
+                            <div>
+                                <h1 class="heading-display">Student Mode</h1>
+                                <p class="text-secondary body-text mt-xs" id="study-subheading">Manage your academic schedule, subjects, and study sessions.</p>
+                            </div>
+                        </div>
+
+                        <!-- Student Mode Sub-Navigation -->
+                        <nav class="study-subnav" aria-label="Student Mode Sections">
+                            <button class="study-nav-btn active" data-study-tab="timetable" aria-selected="true">Timetable</button>
+                            <button class="study-nav-btn" data-study-tab="overview" aria-selected="false">Overview</button>
+                            <button class="study-nav-btn" data-study-tab="subjects" aria-selected="false">Subjects <span class="nav-tag">Phase 6+</span></button>
+                            <button class="study-nav-btn" data-study-tab="sessions" aria-selected="false">Study Sessions <span class="nav-tag">Phase 6+</span></button>
+                            <button class="study-nav-btn" data-study-tab="tests" aria-selected="false">Mock Tests <span class="nav-tag">Phase 6+</span></button>
+                        </nav>
+
+                        <!-- ---- TAB: TIMETABLE ---- -->
+                        <div id="study-tab-timetable" class="study-tab-panel">
+
+                            <!-- Timetable Metadata Setup -->
+                            <section class="card section-spacing" id="tt-setup-card">
+                                <div class="flex-header mb-md">
+                                    <div>
+                                        <h2 class="heading-subheading">Schedule Details</h2>
+                                        <p class="text-secondary text-small" id="tt-meta-display">Institution, semester, and batch details.</p>
+                                    </div>
+                                    <button id="btn-tt-setup-toggle" class="btn btn-secondary">Edit details</button>
+                                </div>
+
+                                <!-- Inline setup form (hidden by default) -->
+                                <form id="form-tt-setup" class="tt-setup-form hidden" novalidate>
+                                    <div class="grid grid-2 gap-md mb-md">
+                                        <div class="form-group">
+                                            <label for="tt-input-institution" class="form-label">Institution <span class="text-muted">(Optional)</span></label>
+                                            <input type="text" id="tt-input-institution" class="form-input" placeholder="e.g. Newton School of Technology" maxlength="100">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tt-input-batch" class="form-label">Batch / Section <span class="text-muted">(Optional)</span></label>
+                                            <input type="text" id="tt-input-batch" class="form-input" placeholder="e.g. B1, ECE-A, Section 2" maxlength="40">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-2 gap-md mb-md">
+                                        <div class="form-group">
+                                            <label for="tt-input-year" class="form-label">Academic Year <span class="text-muted">(Optional)</span></label>
+                                            <input type="text" id="tt-input-year" class="form-input" placeholder="e.g. 2026-27" maxlength="20">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tt-input-semester" class="form-label">Semester <span class="text-muted">(Optional)</span></label>
+                                            <input type="text" id="tt-input-semester" class="form-input" placeholder="e.g. 1 or Semester 1" maxlength="20">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer" style="border-top:none;padding-top:0;justify-content:flex-start;gap:var(--space-2);">
+                                        <button type="submit" class="btn btn-primary">Save details</button>
+                                        <button type="button" id="btn-tt-setup-cancel" class="btn btn-secondary">Cancel</button>
+                                    </div>
+                                </form>
+                            </section>
+
+                            <!-- Day Switcher -->
+                            <section class="card section-spacing" id="tt-day-switcher-card">
+                                <div class="flex-header mb-md">
+                                    <h2 class="heading-subheading" id="tt-day-heading">Weekly Timetable</h2>
+                                    <button id="btn-tt-add-entry" class="btn btn-primary">+ Add class</button>
+                                </div>
+
+                                <div class="tt-day-tabs" role="tablist" aria-label="Select day to view">
+                                    <button class="tt-day-btn" data-day="monday"    role="tab" aria-selected="false">Mon</button>
+                                    <button class="tt-day-btn" data-day="tuesday"   role="tab" aria-selected="false">Tue</button>
+                                    <button class="tt-day-btn" data-day="wednesday" role="tab" aria-selected="false">Wed</button>
+                                    <button class="tt-day-btn" data-day="thursday"  role="tab" aria-selected="false">Thu</button>
+                                    <button class="tt-day-btn" data-day="friday"    role="tab" aria-selected="false">Fri</button>
+                                    <button class="tt-day-btn" data-day="saturday"  role="tab" aria-selected="false">Sat</button>
+                                    <button class="tt-day-btn" data-day="sunday"    role="tab" aria-selected="false">Sun</button>
+                                </div>
+                            </section>
+
+                            <!-- Day Schedule Panel -->
+                            <section class="card section-spacing" id="tt-day-panel">
+                                <div class="flex-header mb-md">
+                                    <h2 class="heading-subheading" id="tt-day-panel-heading">Select a day above</h2>
+                                    <span class="nav-tag" id="tt-day-entry-count">— entries</span>
+                                </div>
+                                <div id="tt-day-entries-container" class="tt-entry-list">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </section>
+
+                            <!-- Weekly Summary -->
+                            <section class="card section-spacing" id="tt-week-summary-card">
+                                <h2 class="heading-subheading mb-sm">Week at a Glance</h2>
+                                <div id="tt-week-summary-container" class="tt-week-summary">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- ---- TAB: OVERVIEW ---- -->
+                        <div id="study-tab-overview" class="study-tab-panel hidden">
+                            <section class="card section-spacing">
+                                <h2 class="heading-subheading mb-sm">Today&#8217;s Schedule</h2>
+                                <p class="text-secondary text-small mb-md" id="study-overview-date">Loading...</p>
+                                <div id="study-today-container" class="tt-entry-list">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </section>
+                            <section class="card section-spacing">
+                                <div class="card-caption mb-xs">Next Class</div>
+                                <div id="study-next-class-container" class="study-next-class">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- ---- TAB: SUBJECTS (placeholder) ---- -->
+                        <div id="study-tab-subjects" class="study-tab-panel hidden">
+                            <div class="empty-state">
+                                <div class="empty-title">Subjects</div>
+                                <p class="empty-description">Subject management will be available in a future update.</p>
+                            </div>
+                        </div>
+
+                        <!-- ---- TAB: STUDY SESSIONS (placeholder) ---- -->
+                        <div id="study-tab-sessions" class="study-tab-panel hidden">
+                            <div class="empty-state">
+                                <div class="empty-title">Study Sessions</div>
+                                <p class="empty-description">Session logging will be available in a future update.</p>
+                            </div>
+                        </div>
+
+                        <!-- ---- TAB: MOCK TESTS (placeholder) ---- -->
+                        <div id="study-tab-tests" class="study-tab-panel hidden">
+                            <div class="empty-state">
+                                <div class="empty-title">Mock Tests</div>
+                                <p class="empty-description">Mock test tracking will be available in a future update.</p>
+                            </div>
+                        </div>
+
+                    </section>
+
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         PHASE 3 TASK MODAL DIALOGS
+         ==================================================================== -->
+    <!-- Modal: Task Create / Edit -->
+    <div id="modal-task-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-task-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-task-title">Add Task</h3>
+                <button type="button" id="btn-modal-close" class="btn-close" aria-label="Close Modal">&times;</button>
+            </div>
+            <form id="form-task" class="modal-body" novalidate>
+                <input type="hidden" id="task-input-id" value="">
+                
+                <div class="form-group mb-md">
+                    <label for="task-input-title" class="form-label">Task Title <span class="text-danger">*</span></label>
+                    <input type="text" id="task-input-title" class="form-input" placeholder="e.g., Complete physics assignment" required>
+                    <div class="form-error hidden" id="error-task-title">Please enter a task title.</div>
+                </div>
+
+                <div class="form-group mb-md">
+                    <label for="task-input-description" class="form-label">Description <span class="text-muted">(Optional)</span></label>
+                    <textarea id="task-input-description" class="form-input" rows="3" placeholder="Additional details or instructions..."></textarea>
+                </div>
+
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="task-input-goal" class="form-label">Associated Goal</label>
+                        <select id="task-input-goal" class="form-input">
+                            <option value="">No Goal</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="task-input-category" class="form-label">Category</label>
+                        <select id="task-input-category" class="form-input">
+                            <option value="Study">Study</option>
+                            <option value="Work">Work</option>
+                            <option value="Project">Project</option>
+                            <option value="Personal">Personal</option>
+                            <option value="Health">Health</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-3 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="task-input-date" class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" id="task-input-date" class="form-input" required>
+                        <div class="form-error hidden" id="error-task-date">Please select a valid date.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="task-input-start-time" class="form-label">Start Time <span class="text-muted">(Optional)</span></label>
+                        <input type="time" id="task-input-start-time" class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="task-input-end-time" class="form-label">End Time <span class="text-muted">(Optional)</span></label>
+                        <input type="time" id="task-input-end-time" class="form-input">
+                    </div>
+                </div>
+
+                <!-- Time validation error -->
+                <div class="alert alert-danger hidden mt-xs mb-sm" id="error-task-time">
+                    End time must be later than start time.
+                </div>
+
+                <!-- Overlap warning -->
+                <div class="alert alert-warning hidden mt-xs mb-sm" id="warning-task-overlap">
+                    <strong>Warning:</strong> This task overlaps with another scheduled task.
+                </div>
+
+                <div class="form-group mb-md">
+                    <label for="task-input-priority" class="form-label">Priority</label>
+                    <select id="task-input-priority" class="form-input">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="btn-task-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" id="btn-task-save" class="btn btn-primary">Save task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Confirm Delete Task -->
+    <div id="modal-task-delete" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h3 class="heading-heading text-danger" id="modal-delete-title">Delete Task?</h3>
+                <button type="button" id="btn-delete-close" class="btn-close" aria-label="Close Modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="body-text text-secondary mb-md">
+                    Are you sure you want to delete "<strong id="delete-task-title-text"></strong>"? The task will be permanently removed from this device.
+                </p>
+                <input type="hidden" id="delete-task-target-id" value="">
+                <div class="modal-footer">
+                    <button type="button" id="btn-delete-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="button" id="btn-delete-confirm" class="btn btn-danger">Delete task</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <div class="footer-left">
+                <span>&copy; Momentum AI — Execution Over Intention</span>
+                <span class="footer-separator">|</span>
+                <span>Version 1.1.0 (Phase 6)</span>
+            </div>
+            <div class="footer-links">
+                <a href="privacy.html" class="footer-link">Privacy Policy</a>
+                <a href="terms.html" class="footer-link">Terms of Service</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ====================================================================
+         PHASE 6 TIMETABLE MODAL DIALOGS
+         ==================================================================== -->
+
+    <!-- Modal: Timetable Entry Create / Edit -->
+    <div id="modal-tt-entry-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-tt-entry-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-tt-entry-title">Add Class</h3>
+                <button type="button" id="btn-tt-modal-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-tt-entry" class="modal-body" novalidate>
+                <input type="hidden" id="tt-entry-input-id" value="">
+
+                <div class="form-group mb-md">
+                    <label for="tt-entry-input-title" class="form-label">Title <span class="text-danger">*</span></label>
+                    <input type="text" id="tt-entry-input-title" class="form-input" placeholder="e.g. Maths 1 Lab" maxlength="80" required>
+                    <div class="form-error hidden" id="error-tt-title">Please enter a title.</div>
+                </div>
+
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="tt-entry-input-day" class="form-label">Day <span class="text-danger">*</span></label>
+                        <select id="tt-entry-input-day" class="form-input" required>
+                            <option value="">Select day</option>
+                            <option value="monday">Monday</option>
+                            <option value="tuesday">Tuesday</option>
+                            <option value="wednesday">Wednesday</option>
+                            <option value="thursday">Thursday</option>
+                            <option value="friday">Friday</option>
+                            <option value="saturday">Saturday</option>
+                            <option value="sunday">Sunday</option>
+                        </select>
+                        <div class="form-error hidden" id="error-tt-day">Please select a day.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="tt-entry-input-type" class="form-label">Type</label>
+                        <select id="tt-entry-input-type" class="form-input">
+                            <option value="lecture">Lecture</option>
+                            <option value="lab">Lab</option>
+                            <option value="practical">Practical</option>
+                            <option value="tutorial">Tutorial</option>
+                            <option value="exam">Exam</option>
+                            <option value="contest">Contest</option>
+                            <option value="yoga">Yoga</option>
+                            <option value="break">Break</option>
+                            <option value="lunch">Lunch</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="tt-entry-input-start" class="form-label">Start Time <span class="text-danger">*</span></label>
+                        <input type="time" id="tt-entry-input-start" class="form-input" required>
+                        <div class="form-error hidden" id="error-tt-start">Please enter a start time.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="tt-entry-input-end" class="form-label">End Time <span class="text-danger">*</span></label>
+                        <input type="time" id="tt-entry-input-end" class="form-input" required>
+                        <div class="form-error hidden" id="error-tt-end">Please enter an end time.</div>
+                    </div>
+                </div>
+                <!-- Time validation error -->
+                <div class="alert alert-danger hidden mt-xs mb-sm" id="error-tt-time">
+                    End time must be later than start time.
+                </div>
+
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="tt-entry-input-classroom" class="form-label">Classroom / Location <span class="text-muted">(Optional)</span></label>
+                        <input type="text" id="tt-entry-input-classroom" class="form-input" placeholder="e.g. Classroom 8" maxlength="60">
+                    </div>
+                    <div class="form-group">
+                        <label for="tt-entry-input-subject" class="form-label">Subject <span class="text-muted">(Optional)</span></label>
+                        <select id="tt-entry-input-subject" class="form-input">
+                            <option value="">No subject mapped</option>
+                            <!-- Populated dynamically from appState.subjects -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group mb-md">
+                    <label for="tt-entry-input-notes" class="form-label">Notes <span class="text-muted">(Optional)</span></label>
+                    <textarea id="tt-entry-input-notes" class="form-input" rows="2" placeholder="Any additional notes..."></textarea>
+                </div>
+
+                <!-- Overlap warning -->
+                <div class="alert alert-warning hidden mt-xs mb-sm" id="warning-tt-overlap">
+                    <strong>Warning:</strong> This entry overlaps with another timetable entry on this day.
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="btn-tt-entry-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" id="btn-tt-entry-save" class="btn btn-primary">Save class</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Confirm Delete Timetable Entry -->
+    <div id="modal-tt-entry-delete" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-tt-delete-title">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h3 class="heading-heading text-danger" id="modal-tt-delete-title">Delete entry?</h3>
+                <button type="button" id="btn-tt-delete-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="body-text text-secondary mb-md">
+                    Delete "<strong id="tt-delete-entry-title-text"></strong>" from the timetable? This will permanently remove it from this device.
+                </p>
+                <input type="hidden" id="tt-delete-entry-target-id" value="">
+                <div class="modal-footer">
+                    <button type="button" id="btn-tt-delete-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="button" id="btn-tt-delete-confirm" class="btn btn-danger">Delete entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Script -->
+    <script src="script.js"></script>
+</body>
+</html>
