@@ -10,7 +10,7 @@
 // --------------------------------------------------------------------------
 // 1. CONSTANTS & CONFIGURATION PRESETS
 // --------------------------------------------------------------------------
-const SCHEMA_VERSION = "1.1.0";
+const SCHEMA_VERSION = "1.2.0";
 const STORAGE_KEY = "momentumAI";
 const CORRUPTED_BACKUP_KEY = "momentumAI_corrupted_backup";
 
@@ -45,7 +45,7 @@ const GOAL_PRESETS = Object.freeze({
 // 2. CENTRALIZED APPLICATION STATE FACTORY
 // --------------------------------------------------------------------------
 /**
- * Creates a clean, empty initial application state structure matching Schema v1.1.0
+ * Creates a clean, empty initial application state structure matching Schema v1.2.0
  */
 function createInitialState() {
     return {
@@ -56,21 +56,42 @@ function createInitialState() {
             age: null,
             gender: "",
             studentOrWorker: "", // 'student' | 'worker'
+            userType: "",
             primaryGoal: "",
+            wakeTime: "07:00",
+            sleepTime: "23:00",
+            peakFocusTime: "Morning",
+            availableTime: "",
+            onboardingCompleted: false,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         },
-        goals: [],                // { id, type, title, target, deadline, status, createdAt, updatedAt }
+        goals: [],                // { id, type, title, target, deadline, status, priority, createdAt, updatedAt }
         tasks: [],                // { id, title, category, date, startTime, endTime, priority, estimatedDuration, notes, status, completionPercentage, createdAt, updatedAt }
         accountabilityRecords: [],// { id, taskId, status, reason, customReason, recordedAt }
         subjects: [],             // { id, name, goalType, active, createdAt, updatedAt }
-        studySessions: [],        // { id, subjectId, chapter, startTime, endTime, duration, sessionType, questionsSolved, notes, createdAt }
-        habits: [],               // { id, title, frequency, targetDays, streak, createdAt }
-        sleepLogs: [],            // { id, date, bedtime, wakeTime, duration, qualityRating, notes }
-        waterLogs: [],            // { id, date, amountMl, targetMl }
-        exerciseLogs: [],         // { id, date, type, durationMinutes, intensity, caloriesBurned }
-        moodLogs: [],             // { id, date, moodRating, energyLevel, notes }
-        reminders: [],            // { id, title, triggerTime, recurring, active }
+        chapters: [],             // { id, subjectId, name, status, revisionCount, order, notes, createdAt, updatedAt }
+        studySessions: [],        // { id, subjectId, chapter, chapterId, startTime, endTime, duration, questionsSolved, accuracyPercent, notes, createdAt }
+        studyPlans: [],           // { id, date, startTime, endTime, durationMinutes, subjectId, chapterId, reason, status, taskId, createdAt, updatedAt }
+        mockTests: [],            // { id, title, subjectId, date, totalQuestions, correctAnswers, durationMinutes, scorePercent, notes, createdAt }
+        academicProfile: {
+            targetExam: "",
+            examDate: null,
+            dailyStudyTargetHours: 3.5,
+            preferredSessionDurationMinutes: 60,
+            weakSubjectIds: [],
+            routine: {
+                wakeTime: "07:00",
+                sleepTime: "23:00"
+            },
+            notes: ""
+        },
+        habits: [],               // { id, title, frequency, targetDays, streak, completions, archived, createdAt }
+        sleepLogs: [],            // { id, date, bedtime, wakeTime, duration, qualityRating, notes, createdAt }
+        waterLogs: [],            // { id, date, amountMl, targetMl, entries }
+        exerciseLogs: [],         // { id, date, type, durationMinutes, intensity, notes, createdAt }
+        moodLogs: [],             // { id, date, moodRating, energyLevel, label, notes, createdAt }
+        reminders: [],            // { id, title, category, dateTime, linkedTaskId, linkedGoalId, enabled, handled, createdAt, updatedAt }
         // Phase 6: Weekly academic timetable (institution-agnostic recurring schedule)
         timetable: {
             institution: "",      // free text — any school/college/university
@@ -80,7 +101,10 @@ function createInitialState() {
             entries: []           // { id, day, startTime, endTime, title, subjectId, type, classroom, notes, createdAt, updatedAt }
         },
         settings: {
-            theme: "system"       // "light" | "dark" | "system"
+            theme: "system",      // "light" | "dark" | "system"
+            reducedMotion: false,
+            notificationsEnabled: false,
+            soundEnabled: true
         }
     };
 }
@@ -122,9 +146,7 @@ function generateId() {
  */
 const SCHEMA_MIGRATION_REGISTRY = {
     "1.0.0": function migrate_1_0_to_1_1(oldState) {
-        // Deep copy via JSON round-trip to avoid mutations to the original object
         const newState = JSON.parse(JSON.stringify(oldState));
-        // Add timetable object — preserve any partial timetable data if somehow present
         if (!newState.timetable || typeof newState.timetable !== 'object') {
             newState.timetable = {
                 institution: "",
@@ -134,12 +156,42 @@ const SCHEMA_MIGRATION_REGISTRY = {
                 entries: []
             };
         } else {
-            // Ensure entries array exists
             if (!Array.isArray(newState.timetable.entries)) {
                 newState.timetable.entries = [];
             }
         }
+        newState.schemaVersion = "1.1.0";
         console.log('[Migration] 1.0.0 → 1.1.0: timetable object added. Existing data preserved.');
+        return newState;
+    },
+    "1.1.0": function migrate_1_1_to_1_2(oldState) {
+        const newState = JSON.parse(JSON.stringify(oldState));
+        if (!newState.academicProfile || typeof newState.academicProfile !== 'object') {
+            newState.academicProfile = {
+                targetExam: "",
+                examDate: null,
+                dailyStudyTargetHours: 3.5,
+                preferredSessionDurationMinutes: 60,
+                weakSubjectIds: [],
+                routine: {
+                    wakeTime: (newState.profile && newState.profile.wakeTime) || "07:00",
+                    sleepTime: (newState.profile && newState.profile.sleepTime) || "23:00"
+                },
+                notes: ""
+            };
+        }
+        if (!Array.isArray(newState.chapters)) newState.chapters = [];
+        if (!Array.isArray(newState.studyPlans)) newState.studyPlans = [];
+        if (!Array.isArray(newState.mockTests)) newState.mockTests = [];
+        if (!newState.settings || typeof newState.settings !== 'object') {
+            newState.settings = { theme: "system" };
+        }
+        if (typeof newState.settings.reducedMotion !== 'boolean') newState.settings.reducedMotion = false;
+        if (typeof newState.settings.notificationsEnabled !== 'boolean') newState.settings.notificationsEnabled = false;
+        if (typeof newState.settings.soundEnabled !== 'boolean') newState.settings.soundEnabled = true;
+
+        newState.schemaVersion = "1.2.0";
+        console.log('[Migration] 1.1.0 → 1.2.0: academicProfile, chapters, studyPlans, mockTests added. Existing data preserved.');
         return newState;
     }
 };
@@ -170,9 +222,9 @@ function validateAppState(data) {
 
     // Required domain collection keys
     const requiredArrays = [
-        'goals', 'tasks', 'accountabilityRecords', 'subjects', 
-        'studySessions', 'habits', 'sleepLogs', 'waterLogs', 
-        'exerciseLogs', 'moodLogs', 'reminders'
+        'goals', 'tasks', 'accountabilityRecords', 'subjects', 'chapters',
+        'studySessions', 'studyPlans', 'mockTests', 'habits', 'sleepLogs', 
+        'waterLogs', 'exerciseLogs', 'moodLogs', 'reminders'
     ];
 
     for (const key of requiredArrays) {
@@ -186,8 +238,20 @@ function validateAppState(data) {
         data.profile = createInitialState().profile;
     }
 
+    if (!data.academicProfile || typeof data.academicProfile !== 'object') {
+        data.academicProfile = createInitialState().academicProfile;
+    } else {
+        if (typeof data.academicProfile.targetExam !== 'string') data.academicProfile.targetExam = "";
+        if (typeof data.academicProfile.dailyStudyTargetHours !== 'number') data.academicProfile.dailyStudyTargetHours = 3.5;
+        if (typeof data.academicProfile.preferredSessionDurationMinutes !== 'number') data.academicProfile.preferredSessionDurationMinutes = 60;
+        if (!Array.isArray(data.academicProfile.weakSubjectIds)) data.academicProfile.weakSubjectIds = [];
+        if (!data.academicProfile.routine || typeof data.academicProfile.routine !== 'object') {
+            data.academicProfile.routine = { wakeTime: "07:00", sleepTime: "23:00" };
+        }
+    }
+
     if (!data.settings || typeof data.settings !== 'object') {
-        data.settings = { theme: "system" };
+        data.settings = { theme: "system", reducedMotion: false, notificationsEnabled: false, soundEnabled: true };
     }
 
     // Phase 6: Validate timetable object — supply safe defaults if absent
@@ -309,33 +373,32 @@ function migrateAppState(rawData, targetVersion = SCHEMA_VERSION) {
         return { status: 'NO_STATE', state: createInitialState() };
     }
 
-    const currentVersion = rawData.schemaVersion || "1.0.0";
-    const comp = compareVersions(currentVersion, targetVersion);
+    let currentVersion = rawData.schemaVersion || "1.0.0";
+    const initialComp = compareVersions(currentVersion, targetVersion);
 
-    if (comp === 0) {
-        // Case C: Current schema 1.0.0
+    if (initialComp === 0) {
         return { status: 'CURRENT', state: rawData };
-    } else if (comp < 0) {
-        // Case B: Older schema version (< 1.0.0)
-        // Check if an explicit migration handler exists in registry
-        if (typeof SCHEMA_MIGRATION_REGISTRY[currentVersion] === 'function') {
-            try {
-                console.log(`[Migration] Running registered migration for schema v${currentVersion} -> v${targetVersion}`);
-                const migrated = SCHEMA_MIGRATION_REGISTRY[currentVersion](rawData);
-                migrated.schemaVersion = targetVersion;
-                return { status: 'MIGRATED', state: migrated, fromVersion: currentVersion };
-            } catch (err) {
-                console.error(`[Migration] Explicit migration from v${currentVersion} failed:`, err);
-                return { status: 'MIGRATION_FAILED', state: rawData, version: currentVersion };
+    } else if (initialComp < 0) {
+        let stateCopy = JSON.parse(JSON.stringify(rawData));
+        const originalVersion = currentVersion;
+        while (compareVersions(currentVersion, targetVersion) < 0) {
+            if (typeof SCHEMA_MIGRATION_REGISTRY[currentVersion] === 'function') {
+                try {
+                    console.log(`[Migration] Running registered migration for schema v${currentVersion}`);
+                    stateCopy = SCHEMA_MIGRATION_REGISTRY[currentVersion](stateCopy);
+                    currentVersion = stateCopy.schemaVersion || targetVersion;
+                } catch (err) {
+                    console.error(`[Migration] Explicit migration from v${currentVersion} failed:`, err);
+                    return { status: 'MIGRATION_FAILED', state: rawData, version: currentVersion };
+                }
+            } else {
+                console.warn(`[Migration] Schema v${currentVersion} is older than v${targetVersion}, but no explicit migration transformation is registered. Preserving raw state without false upgrade.`);
+                return { status: 'UNSUPPORTED_OLD_VERSION', state: rawData, version: currentVersion };
             }
-        } else {
-            // No explicit transformation handler exists for this older version.
-            // Architecturally honest: Do NOT fake migration by merely changing schemaVersion!
-            console.warn(`[Migration] Schema v${currentVersion} is older than v${targetVersion}, but no explicit migration transformation is registered. Preserving raw state without false upgrade.`);
-            return { status: 'UNSUPPORTED_OLD_VERSION', state: rawData, version: currentVersion };
         }
+        stateCopy.schemaVersion = targetVersion;
+        return { status: 'MIGRATED', state: stateCopy, fromVersion: originalVersion };
     } else {
-        // Case D: Unknown/future schema version (> 1.0.0)
         console.warn(`[Migration] Future schema version v${currentVersion} detected (> v${targetVersion}). Preserving raw data in read-only mode.`);
         return { status: 'FUTURE_VERSION', state: rawData, version: currentVersion };
     }
@@ -549,6 +612,10 @@ function getIsoTodayDate() {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+}
+
+function getTodayDateString() {
+    return getIsoTodayDate();
 }
 
 function renderDashboard() {
@@ -832,14 +899,17 @@ function renderDomainCollectionsTable() {
         { name: 'Tasks', schema: 'Array<{ id, title, category, priority, status }>', count: appState.tasks.length },
         { name: 'Accountability Records', schema: 'Array<{ id, taskId, status, reason }>', count: appState.accountabilityRecords.length },
         { name: 'Study Subjects', schema: 'Array<{ id, name, goalType, active }>', count: appState.subjects.length },
-        { name: 'Study Sessions', schema: 'Array<{ id, subjectId, duration, sessionType }>', count: appState.studySessions.length },
+        { name: 'Chapters', schema: 'Array<{ id, subjectId, name, status, revisionCount }>', count: (appState.chapters || []).length },
+        { name: 'Study Sessions', schema: 'Array<{ id, subjectId, duration, questionsSolved }>', count: appState.studySessions.length },
+        { name: 'Study Plans', schema: 'Array<{ id, date, startTime, endTime, reason }>', count: (appState.studyPlans || []).length },
+        { name: 'Mock Tests', schema: 'Array<{ id, title, subjectId, scorePercent }>', count: (appState.mockTests || []).length },
         { name: 'Timetable Entries', schema: 'Array<{ id, day, startTime, endTime, title, type }>', count: ttEntryCount },
         { name: 'Habits', schema: 'Array<{ id, title, frequency, streak }>', count: appState.habits.length },
         { name: 'Sleep Logs', schema: 'Array<{ id, bedtime, wakeTime, duration, quality }>', count: appState.sleepLogs.length },
         { name: 'Water Logs', schema: 'Array<{ id, date, amountMl, targetMl }>', count: appState.waterLogs.length },
         { name: 'Exercise Logs', schema: 'Array<{ id, date, type, durationMinutes }>', count: appState.exerciseLogs.length },
         { name: 'Mood Logs', schema: 'Array<{ id, date, moodRating, energyLevel }>', count: appState.moodLogs.length },
-        { name: 'Reminders', schema: 'Array<{ id, title, triggerTime, active }>', count: appState.reminders.length }
+        { name: 'Reminders', schema: 'Array<{ id, title, category, dateTime, enabled }>', count: appState.reminders.length }
     ];
 
     tbody.innerHTML = collections.map(col => `
@@ -879,6 +949,11 @@ function initNavigationTabs() {
     const viewFoundation = document.getElementById('view-foundation');
     const viewTasks = document.getElementById('view-tasks');
     const viewStudy = document.getElementById('view-study');
+    const viewWellness = document.getElementById('view-wellness');
+    const viewAICoach = document.getElementById('view-aicoach');
+    const viewReminders = document.getElementById('view-reminders');
+    const viewAnalytics = document.getElementById('view-analytics');
+    const viewSettings = document.getElementById('view-settings');
     const viewPlaceholder = document.getElementById('view-placeholder');
     const placeholderTitle = document.getElementById('placeholder-title');
     const placeholderDesc = document.getElementById('placeholder-desc');
@@ -888,6 +963,11 @@ function initNavigationTabs() {
         if (viewFoundation) viewFoundation.classList.add('hidden');
         if (viewTasks) viewTasks.classList.add('hidden');
         if (viewStudy) viewStudy.classList.add('hidden');
+        if (viewWellness) viewWellness.classList.add('hidden');
+        if (viewAICoach) viewAICoach.classList.add('hidden');
+        if (viewReminders) viewReminders.classList.add('hidden');
+        if (viewAnalytics) viewAnalytics.classList.add('hidden');
+        if (viewSettings) viewSettings.classList.add('hidden');
         if (viewPlaceholder) viewPlaceholder.classList.add('hidden');
     }
 
@@ -914,16 +994,39 @@ function initNavigationTabs() {
             } else if (targetView === 'tasks') {
                 if (viewTasks) viewTasks.classList.remove('hidden');
                 renderTaskList();
+            } else if (targetView === 'today') {
+                if (viewTasks) viewTasks.classList.remove('hidden');
+                if (typeof taskPlannerState !== 'undefined') {
+                    taskPlannerState.datePreset = 'today';
+                    taskPlannerState.selectedDate = getTodayDateString();
+                    syncDateTabButtons();
+                }
+                renderTaskList();
             } else if (targetView === 'study') {
                 if (viewStudy) viewStudy.classList.remove('hidden');
                 renderStudyView();
+            } else if (targetView === 'wellness') {
+                if (viewWellness) viewWellness.classList.remove('hidden');
+                renderWellnessView();
+            } else if (targetView === 'aicoach') {
+                if (viewAICoach) viewAICoach.classList.remove('hidden');
+                renderAICoachView();
+            } else if (targetView === 'reminders') {
+                if (viewReminders) viewReminders.classList.remove('hidden');
+                renderRemindersView();
+            } else if (targetView === 'analytics') {
+                if (viewAnalytics) viewAnalytics.classList.remove('hidden');
+                renderAnalyticsView();
+            } else if (targetView === 'settings') {
+                if (viewSettings) viewSettings.classList.remove('hidden');
+                renderSettingsView();
             } else {
                 if (viewPlaceholder) viewPlaceholder.classList.remove('hidden');
                 if (placeholderTitle) {
                     placeholderTitle.textContent = `${btn.textContent.replace(/Phase \d+/, '').trim()} Module (Phase ${targetPhase || '?'})`;
                 }
                 if (placeholderDesc) {
-                    placeholderDesc.textContent = `The ${btn.textContent.replace(/Phase \d+/, '').trim()} user interface will be built in a future phase. The Phase 0/1 foundation engine currently manages all state data schemas for this collection.`;
+                    placeholderDesc.textContent = `The ${btn.textContent.replace(/Phase \d+/, '').trim()} user interface will be built in a future phase.`;
                 }
             }
         });
@@ -1470,7 +1573,7 @@ function initOnboardingController() {
 // 10. APPLICATION INITIALIZATION
 // --------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("[Momentum AI] Initializing Phase 6...");
+    console.log("[Momentum AI] Initializing Momentum AI V1...");
     loadAppState();
     initThemeSelector();
     initNavigationTabs();
@@ -1478,10 +1581,18 @@ document.addEventListener('DOMContentLoaded', () => {
     initOnboardingController();
     initTaskPlanner();
     initTimetable();
+    initRealisticPlanner();
+    initWellnessModule();
+    initAICoachModule();
+    initRemindersModule();
+    initAnalyticsModule();
+    initSettingsModule();
+    seedB1SubjectsIfEmpty();
     checkOnboardingState();
     renderAllUI();
     registerServiceWorker();
-    console.log("[Momentum AI] Phase 6 initialized successfully.");
+    startRemindersInterval();
+    console.log("[Momentum AI] Momentum AI V1 initialized successfully.");
 });
 
 
@@ -3366,6 +3477,10 @@ function renderStudyView() {
     switch (ttState.activeSubTab) {
         case 'timetable': renderTimetableTab(); break;
         case 'overview':  renderOverviewTab();  break;
+        case 'planner':   renderPlannerTab();   break;
+        case 'subjects':  renderSubjectsTab();  break;
+        case 'sessions':  renderSessionsTab();  break;
+        case 'tests':     renderTestsTab();     break;
         default:          renderTimetableTab(); break;
     }
 }
@@ -3411,6 +3526,10 @@ function initTimetable() {
             // Render the newly shown tab
             if (tab === 'timetable') renderTimetableTab();
             if (tab === 'overview')  renderOverviewTab();
+            if (tab === 'planner')   renderPlannerTab();
+            if (tab === 'subjects')  renderSubjectsTab();
+            if (tab === 'sessions')  renderSessionsTab();
+            if (tab === 'tests')     renderTestsTab();
         });
     });
 
@@ -3524,3 +3643,2721 @@ function initTimetable() {
 
     console.log('[Timetable] Phase 6 Timetable initialized.');
 }
+
+// ==========================================================================
+// PHASE 7 — REALISTIC STUDY PLANNER & STUDENT MODE EXPANSIONS
+// ==========================================================================
+
+const plannerState = {
+    activeDate: getTodayDateString(),
+    targetHours: 3.5,
+    sessionDuration: 60,
+    editingSessionId: null
+};
+
+/**
+ * Seeds B1 subjects if the subjects array is currently empty.
+ * Matches exact spec mappings for the B1 timetable.
+ */
+function seedB1SubjectsIfEmpty() {
+    if (!Array.isArray(appState.subjects)) appState.subjects = [];
+    if (appState.subjects.length > 0) return false;
+
+    const now = new Date().toISOString();
+    const b1Subjects = [
+        { name: "Maths 1 - B", goalType: "Engineering", active: true },
+        { name: "Maths 1 Lab B1", goalType: "Engineering", active: true },
+        { name: "PSP B", goalType: "Engineering", active: true },
+        { name: "PSP Lab B1", goalType: "Engineering", active: true },
+        { name: "AP-Robo B", goalType: "Engineering", active: true },
+        { name: "AP-Robo Lab B1", goalType: "Engineering", active: true },
+        { name: "SnAI B", goalType: "Engineering", active: true },
+        { name: "SnW Lab B1", goalType: "Engineering", active: true },
+        { name: "English B", goalType: "General", active: true },
+        { name: "YOGA B1", goalType: "General", active: true }
+    ];
+
+    b1Subjects.forEach(s => {
+        appState.subjects.push({
+            id: generateId(),
+            name: s.name,
+            goalType: s.goalType,
+            active: true,
+            createdAt: now,
+            updatedAt: now
+        });
+    });
+
+    seedInitialChaptersIfEmpty();
+    saveAppState();
+    console.log('[Academic] B1 curriculum subjects and chapters seeded.');
+    return true;
+}
+
+/**
+ * Seeds initial academic chapters for core subjects if empty.
+ */
+function seedInitialChaptersIfEmpty() {
+    if (!Array.isArray(appState.chapters)) appState.chapters = [];
+    if (appState.chapters.length > 0) return false;
+
+    const maths = findSubjectIdByName("Maths 1 - B");
+    const psp = findSubjectIdByName("PSP B");
+    const aprobo = findSubjectIdByName("AP-Robo B");
+    const snai = findSubjectIdByName("SnAI B");
+    const english = findSubjectIdByName("English B");
+
+    const chaptersData = [
+        { subjectId: maths, name: "Matrices & Linear Algebra", status: "completed", revisionCount: 1, order: 1 },
+        { subjectId: maths, name: "Differential Calculus", status: "in_progress", revisionCount: 0, order: 2 },
+        { subjectId: maths, name: "Integral Calculus", status: "not_started", revisionCount: 0, order: 3 },
+        { subjectId: maths, name: "Vector Spaces", status: "not_started", revisionCount: 0, order: 4 },
+
+        { subjectId: psp, name: "Control Structures & Loops", status: "completed", revisionCount: 1, order: 1 },
+        { subjectId: psp, name: "Functions & Recursion", status: "in_progress", revisionCount: 0, order: 2 },
+        { subjectId: psp, name: "Pointers & Dynamic Memory", status: "not_started", revisionCount: 0, order: 3 },
+        { subjectId: psp, name: "Data Structures Basics", status: "not_started", revisionCount: 0, order: 4 },
+
+        { subjectId: aprobo, name: "Robot Kinematics", status: "completed", revisionCount: 1, order: 1 },
+        { subjectId: aprobo, name: "Sensors & Actuators", status: "in_progress", revisionCount: 0, order: 2 },
+        { subjectId: aprobo, name: "Microcontroller Interfaces", status: "not_started", revisionCount: 0, order: 3 },
+
+        { subjectId: snai, name: "State Space Search", status: "in_progress", revisionCount: 0, order: 1 },
+        { subjectId: snai, name: "Heuristic Search & A*", status: "not_started", revisionCount: 0, order: 2 },
+        { subjectId: snai, name: "Knowledge Representation", status: "not_started", revisionCount: 0, order: 3 },
+
+        { subjectId: english, name: "Technical Report Writing", status: "completed", revisionCount: 1, order: 1 },
+        { subjectId: english, name: "Executive Summaries", status: "in_progress", revisionCount: 0, order: 2 }
+    ];
+
+    const now = new Date().toISOString();
+    chaptersData.filter(c => c.subjectId).forEach(c => {
+        appState.chapters.push({
+            id: generateId(),
+            subjectId: c.subjectId,
+            name: c.name,
+            status: c.status,
+            revisionCount: c.revisionCount,
+            order: c.order,
+            notes: "",
+            createdAt: now,
+            updatedAt: now
+        });
+    });
+
+    return true;
+}
+
+/**
+ * Calculates open study windows on a target date between timetable entries and scheduled tasks.
+ * Avoids impossible schedules, avoids overlapping classes, and avoids overlapping tasks.
+ */
+function calculateAvailableStudyWindows(date) {
+    const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    const d = new Date(date + 'T12:00:00');
+    const dayOfWeek = dayNames[d.getDay()];
+
+    const wakeTimeStr = (appState.academicProfile && appState.academicProfile.routine && appState.academicProfile.routine.wakeTime)
+        || (appState.profile && appState.profile.wakeTime) || '07:00';
+    const sleepTimeStr = (appState.academicProfile && appState.academicProfile.routine && appState.academicProfile.routine.sleepTime)
+        || (appState.profile && appState.profile.sleepTime) || '23:00';
+
+    const wakeMinutes = timeToMinutes(wakeTimeStr);
+    const sleepMinutes = timeToMinutes(sleepTimeStr);
+
+    // 1. Timetable classes on this day
+    const dayClasses = (appState.timetable && Array.isArray(appState.timetable.entries))
+        ? appState.timetable.entries.filter(e => e.day === dayOfWeek)
+        : [];
+
+    // 2. Existing scheduled tasks on this date (that have start and end time)
+    const dayTasks = (Array.isArray(appState.tasks) ? appState.tasks : [])
+        .filter(t => t.date === date && t.status !== 'missed' && t.startTime && t.endTime);
+
+    // 3. Assemble commitments
+    const busyIntervals = [];
+
+    dayClasses.forEach(c => {
+        busyIntervals.push({
+            type: 'class',
+            title: c.title,
+            start: timeToMinutes(c.startTime),
+            end: timeToMinutes(c.endTime)
+        });
+    });
+
+    dayTasks.forEach(t => {
+        busyIntervals.push({
+            type: 'task',
+            title: t.title,
+            start: timeToMinutes(t.startTime),
+            end: timeToMinutes(t.endTime)
+        });
+    });
+
+    // Sort commitments chronologically
+    busyIntervals.sort((a, b) => a.start - b.start);
+
+    // Merge overlapping or adjacent busy intervals
+    const mergedBusy = [];
+    busyIntervals.forEach(curr => {
+        if (mergedBusy.length === 0) {
+            mergedBusy.push(Object.assign({}, curr));
+        } else {
+            const prev = mergedBusy[mergedBusy.length - 1];
+            if (curr.start < prev.end) {
+                prev.end = Math.max(prev.end, curr.end);
+                prev.title += ` + ${curr.title}`;
+            } else {
+                mergedBusy.push(Object.assign({}, curr));
+            }
+        }
+    });
+
+    // 4. Invert busy intervals to find free study windows >= 45 minutes
+    const freeWindows = [];
+    let cursor = wakeMinutes;
+
+    mergedBusy.forEach(busy => {
+        if (busy.start > cursor) {
+            const gap = busy.start - cursor;
+            if (gap >= 45) {
+                freeWindows.push({
+                    start: cursor,
+                    end: busy.start,
+                    duration: gap,
+                    precedingEvent: cursor === wakeMinutes ? 'Wake up' : 'Previous activity',
+                    followingEvent: busy.title
+                });
+            }
+        }
+        cursor = Math.max(cursor, busy.end);
+    });
+
+    if (cursor < sleepMinutes) {
+        const gap = sleepMinutes - cursor;
+        if (gap >= 45) {
+            freeWindows.push({
+                start: cursor,
+                end: sleepMinutes,
+                duration: gap,
+                precedingEvent: 'Classes & tasks completed',
+                followingEvent: 'Bedtime'
+            });
+        }
+    }
+
+    return {
+        date,
+        dayOfWeek,
+        busyIntervals,
+        freeWindows,
+        totalFreeMinutes: freeWindows.reduce((acc, w) => acc + w.duration, 0)
+    };
+}
+
+/**
+ * Realistic Study Planner Engine.
+ * Generates an explainable study plan for a specific date respecting all schedule constraints.
+ */
+function generateRealisticStudyPlan(date = getTodayDateString(), targetHours = 3.5, sessionDuration = 60) {
+    if (!Array.isArray(appState.studyPlans)) appState.studyPlans = [];
+    if (!Array.isArray(appState.subjects)) appState.subjects = [];
+    if (!Array.isArray(appState.chapters)) appState.chapters = [];
+
+    // Clean existing planned (non-completed) sessions for this date only
+    appState.studyPlans = appState.studyPlans.filter(p => !(p.date === date && p.status === 'planned'));
+
+    const windowData = calculateAvailableStudyWindows(date);
+    const targetMinutes = Math.round(targetHours * 60);
+
+    // Identify candidate academic subjects (exclude General/Yoga)
+    const academicSubjects = appState.subjects.filter(s => s.active !== false && s.goalType !== 'General');
+    const weakSubjectIds = (appState.academicProfile && appState.academicProfile.weakSubjectIds) || [];
+
+    // Prioritize candidate chapters
+    const candidateChapters = [];
+    academicSubjects.forEach(sub => {
+        const subChapters = appState.chapters.filter(c => c.subjectId === sub.id);
+        const isWeak = weakSubjectIds.includes(sub.id);
+
+        subChapters.forEach(ch => {
+            let priorityScore = 0;
+            if (isWeak) priorityScore += 30;
+            if (ch.status === 'in_progress') priorityScore += 20;
+            else if (ch.status === 'not_started') priorityScore += 15;
+            else if (ch.status === 'completed' && (ch.revisionCount || 0) < 2) priorityScore += 5;
+
+            candidateChapters.push({
+                subject: sub,
+                chapter: ch,
+                priorityScore
+            });
+        });
+    });
+
+    // Sort chapters by priority descending
+    candidateChapters.sort((a, b) => b.priorityScore - a.priorityScore);
+
+    let allocatedMinutes = 0;
+    const generatedSessions = [];
+    let chapterIndex = 0;
+
+    // Helper: format minutes to HH:MM string
+    function minsToTimeStr(totalMins) {
+        const h = Math.floor(totalMins / 60);
+        const m = totalMins % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+
+    // Allocate into free windows
+    for (const win of windowData.freeWindows) {
+        if (allocatedMinutes >= targetMinutes) break;
+
+        let windowCursor = win.start;
+        while (windowCursor + 45 <= win.end && allocatedMinutes < targetMinutes) {
+            const remainingWindow = win.end - windowCursor;
+            const remainingTarget = targetMinutes - allocatedMinutes;
+            const blockDuration = Math.min(sessionDuration, remainingWindow, remainingTarget);
+
+            if (blockDuration < 45) break;
+
+            const cand = candidateChapters[chapterIndex % (candidateChapters.length || 1)];
+            chapterIndex++;
+
+            const startTimeStr = minsToTimeStr(windowCursor);
+            const endTimeStr = minsToTimeStr(windowCursor + blockDuration);
+
+            const subjectName = cand ? cand.subject.name : "Core Academic Study";
+            const chapterName = cand ? cand.chapter.name : "Key Concepts";
+            const subjectId = cand ? cand.subject.id : null;
+            const chapterId = cand ? cand.chapter.id : null;
+
+            // Factual, explainable scheduling reason
+            const reason = `Scheduled because ${subjectName} has unfinished chapter '${chapterName}' and you have a free ${blockDuration}-minute window (${formatTimeDisplay(startTimeStr)}–${formatTimeDisplay(endTimeStr)}) between ${win.precedingEvent} and ${win.followingEvent}.`;
+
+            const session = {
+                id: generateId(),
+                date,
+                startTime: startTimeStr,
+                endTime: endTimeStr,
+                durationMinutes: blockDuration,
+                subjectId,
+                chapterId,
+                reason,
+                status: 'planned',
+                taskId: null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            generatedSessions.push(session);
+            appState.studyPlans.push(session);
+
+            windowCursor += blockDuration + 15; // 15m rest break buffer between study blocks
+            allocatedMinutes += blockDuration;
+        }
+    }
+
+    saveAppState();
+    return {
+        date,
+        totalAllocatedMinutes: allocatedMinutes,
+        sessions: generatedSessions,
+        windowData
+    };
+}
+
+/**
+ * Converts generated study plan sessions on a date into actual tasks in appState.tasks.
+ * Prevents duplicate task entries.
+ */
+function applyStudyPlanToTasks(date) {
+    if (!Array.isArray(appState.studyPlans)) return 0;
+    if (!Array.isArray(appState.tasks)) appState.tasks = [];
+
+    const planSessions = appState.studyPlans.filter(p => p.date === date && p.status === 'planned');
+    let addedCount = 0;
+
+    planSessions.forEach(p => {
+        const sub = getSubjectById(p.subjectId);
+        const subName = sub ? sub.name : 'Study Session';
+        const ch = (appState.chapters || []).find(c => c.id === p.chapterId);
+        const taskTitle = ch ? `${subName}: ${ch.name}` : `Study: ${subName}`;
+
+        // Duplicate check on date & times
+        const exists = appState.tasks.some(t => t.date === date && t.startTime === p.startTime && t.endTime === p.endTime);
+        if (!exists) {
+            const taskId = generateId();
+            appState.tasks.push({
+                id: taskId,
+                title: taskTitle,
+                category: 'Study',
+                date,
+                startTime: p.startTime,
+                endTime: p.endTime,
+                priority: 'high',
+                estimatedDuration: p.durationMinutes,
+                notes: p.reason,
+                status: 'planned',
+                completionPercentage: 0,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+            p.taskId = taskId;
+            addedCount++;
+        }
+    });
+
+    if (addedCount > 0) {
+        saveAppState();
+        renderTaskList();
+        alert(`Successfully imported ${addedCount} planned study block(s) into your Task schedule!`);
+    } else {
+        alert("All planned study blocks for this date are already in your Task schedule.");
+    }
+
+    return addedCount;
+}
+
+/**
+ * Regenerates the study plan for a given day.
+ */
+function regeneratePlannerDay(date) {
+    if (confirm(`Regenerate study plan for ${date}? Non-completed planned sessions on this date will be refreshed.`)) {
+        generateRealisticStudyPlan(date, plannerState.targetHours, plannerState.sessionDuration);
+        renderPlannerTab();
+    }
+}
+
+/**
+ * Builds HTML card for a planned study session.
+ */
+function buildPlannerSessionCardHTML(session) {
+    const sub = getSubjectById(session.subjectId);
+    const subName = sub ? sub.name : 'Study Subject';
+    const ch = (appState.chapters || []).find(c => c.id === session.chapterId);
+    const chName = ch ? ch.name : 'General Concepts';
+
+    return `
+        <div class="planner-card" data-plan-id="${escapeHtml(session.id)}">
+            <div class="planner-card-header">
+                <div>
+                    <span class="badge-status badge-in-progress">${escapeHtml(subName)}</span>
+                    <strong class="ml-xs" style="font-size:var(--font-size-subheading);">${escapeHtml(chName)}</strong>
+                </div>
+                <div class="text-small" style="font-weight:600; color:var(--color-brand);">
+                    ${escapeHtml(formatTimeDisplay(session.startTime))} – ${escapeHtml(formatTimeDisplay(session.endTime))} (${session.durationMinutes} mins)
+                </div>
+            </div>
+            <div class="planner-reason-box">
+                <strong>Why Scheduled:</strong> ${escapeHtml(session.reason)}
+            </div>
+            <div class="flex-header mt-xs">
+                <span class="text-caption text-muted">Status: ${escapeHtml(session.status)}</span>
+                <div class="btn-group">
+                    <button class="btn btn-secondary btn-sm btn-plan-edit" data-id="${escapeHtml(session.id)}">Edit</button>
+                    <button class="btn btn-danger btn-sm btn-plan-del" data-id="${escapeHtml(session.id)}">Remove</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renders the Study Planner tab.
+ */
+function renderPlannerTab() {
+    const dateInput = document.getElementById('planner-input-date');
+    const targetInput = document.getElementById('planner-input-target-hours');
+    const sessionLenInput = document.getElementById('planner-input-session-len');
+    const summaryEl = document.getElementById('planner-constraints-summary');
+    const container = document.getElementById('planner-sessions-container');
+    const headingEl = document.getElementById('planner-schedule-heading');
+
+    if (dateInput && !dateInput.value) {
+        dateInput.value = plannerState.activeDate;
+    }
+    const curDate = (dateInput && dateInput.value) ? dateInput.value : plannerState.activeDate;
+    plannerState.activeDate = curDate;
+
+    if (headingEl) {
+        headingEl.textContent = `Planned Study Sessions (${curDate})`;
+    }
+
+    // Constraint analysis
+    const winData = calculateAvailableStudyWindows(curDate);
+    if (summaryEl) {
+        const freeHours = (winData.totalFreeMinutes / 60).toFixed(1);
+        summaryEl.innerHTML = `
+            <strong>Schedule Analysis:</strong> ${winData.busyIntervals.length} commitments on ${winData.dayOfWeek} (${winData.busyIntervals.filter(b=>b.type==='class').length} classes, ${winData.busyIntervals.filter(b=>b.type==='task').length} scheduled tasks). 
+            Total available study windows: <strong>${freeHours} hours</strong> across ${winData.freeWindows.length} free block(s).
+        `;
+    }
+
+    if (!container) return;
+
+    const plannedForDate = (appState.studyPlans || []).filter(p => p.date === curDate);
+
+    if (plannedForDate.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding:var(--space-8) var(--space-4);">
+                <div class="empty-title">No study plan generated for this date</div>
+                <p class="empty-description">Click "Generate Plan" above to calculate realistic study sessions fitted around your classes and tasks.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = plannedForDate.map(s => buildPlannerSessionCardHTML(s)).join('');
+
+    // Attach edit and delete listeners
+    container.querySelectorAll('.btn-plan-edit').forEach(btn => {
+        btn.addEventListener('click', () => openPlannerEditModal(btn.dataset.id));
+    });
+
+    container.querySelectorAll('.btn-plan-del').forEach(btn => {
+        btn.addEventListener('click', () => deletePlannedSession(btn.dataset.id));
+    });
+}
+
+function openPlannerEditModal(sessionId) {
+    const session = (appState.studyPlans || []).find(s => s.id === sessionId);
+    if (!session) return;
+
+    plannerState.editingSessionId = sessionId;
+    const modal = document.getElementById('modal-planner-session-edit');
+    const subSel = document.getElementById('planner-edit-input-subject');
+    const chSel = document.getElementById('planner-edit-input-chapter');
+    const startIn = document.getElementById('planner-edit-input-start');
+    const endIn = document.getElementById('planner-edit-input-end');
+    const reasonIn = document.getElementById('planner-edit-input-reason');
+
+    if (!modal) return;
+
+    // Populate subjects
+    if (subSel) {
+        subSel.innerHTML = (appState.subjects || []).map(s => `
+            <option value="${escapeHtml(s.id)}" ${s.id === session.subjectId ? 'selected' : ''}>${escapeHtml(s.name)}</option>
+        `).join('');
+    }
+
+    // Populate chapters
+    function updateChapters() {
+        if (!chSel || !subSel) return;
+        const curSub = subSel.value;
+        const chs = (appState.chapters || []).filter(c => c.subjectId === curSub);
+        chSel.innerHTML = chs.map(c => `
+            <option value="${escapeHtml(c.id)}" ${c.id === session.chapterId ? 'selected' : ''}>${escapeHtml(c.name)}</option>
+        `).join('');
+    }
+    updateChapters();
+    if (subSel) subSel.onchange = updateChapters;
+
+    if (startIn) startIn.value = session.startTime;
+    if (endIn) endIn.value = session.endTime;
+    if (reasonIn) reasonIn.value = session.reason;
+
+    modal.classList.remove('hidden');
+}
+
+function closePlannerEditModal() {
+    const modal = document.getElementById('modal-planner-session-edit');
+    if (modal) modal.classList.add('hidden');
+    plannerState.editingSessionId = null;
+}
+
+function deletePlannedSession(sessionId) {
+    if (confirm("Remove this planned session from your study plan?")) {
+        appState.studyPlans = (appState.studyPlans || []).filter(s => s.id !== sessionId);
+        saveAppState();
+        renderPlannerTab();
+    }
+}
+
+// --------------------------------------------------------------------------
+// SUBJECTS & CHAPTERS CONTROLLER
+// --------------------------------------------------------------------------
+
+function renderSubjectsTab() {
+    const container = document.getElementById('subjects-container');
+    if (!container) return;
+
+    const subjects = Array.isArray(appState.subjects) ? appState.subjects : [];
+    const weakSubjectIds = (appState.academicProfile && appState.academicProfile.weakSubjectIds) || [];
+
+    if (subjects.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1; padding:var(--space-8);">
+                <div class="empty-title">No academic subjects defined</div>
+                <p class="empty-description">Click "+ Add Subject" to start tracking your syllabus.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = subjects.map(s => {
+        const isWeak = weakSubjectIds.includes(s.id);
+        const chapters = (appState.chapters || []).filter(c => c.subjectId === s.id);
+        const completedChCount = chapters.filter(c => c.status === 'completed').length;
+
+        return `
+            <article class="card">
+                <div class="flex-header mb-sm">
+                    <div>
+                        <h3 class="heading-subheading">${escapeHtml(s.name)}</h3>
+                        <span class="nav-tag">${escapeHtml(s.goalType || 'Academic')}</span>
+                        ${isWeak ? '<span class="badge-status badge-weak ml-xs">Focus Area</span>' : ''}
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary btn-sm btn-sub-toggle-weak" data-id="${escapeHtml(s.id)}">
+                            ${isWeak ? 'Unmark Focus' : 'Mark Focus'}
+                        </button>
+                        <button class="btn btn-secondary btn-sm btn-sub-add-ch" data-id="${escapeHtml(s.id)}">+ Chapter</button>
+                    </div>
+                </div>
+
+                <div class="text-caption text-secondary mb-xs">
+                    Progress: ${completedChCount} / ${chapters.length} chapters completed
+                </div>
+                <div class="progress-bar-track mb-sm">
+                    <div class="progress-bar-fill" style="width: ${chapters.length ? Math.round((completedChCount / chapters.length) * 100) : 0}%;"></div>
+                </div>
+
+                <div class="chapters-sublist" style="display:flex; flex-direction:column; gap:var(--space-1);">
+                    ${chapters.length === 0 ? '<p class="text-caption text-muted">No chapters added yet.</p>' : ''}
+                    ${chapters.map(c => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-1) var(--space-2); background:var(--color-surface-elevated); border-radius:var(--radius-sm); font-size:var(--font-size-small);">
+                            <span>${escapeHtml(c.name)}</span>
+                            <div style="display:flex; align-items:center; gap:var(--space-2);">
+                                <span class="badge-status badge-${c.status === 'completed' ? 'completed' : c.status === 'in_progress' ? 'in-progress' : 'not-started'}">
+                                    ${c.status === 'completed' ? 'Done' : c.status === 'in_progress' ? 'Active' : 'Pending'}
+                                </span>
+                                <button class="btn-link text-small btn-toggle-ch-status" data-id="${escapeHtml(c.id)}" style="cursor:pointer;">
+                                    ${c.status === 'completed' ? 'Reopen' : 'Done'}
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </article>
+        `;
+    }).join('');
+
+    // Attach listeners
+    container.querySelectorAll('.btn-sub-toggle-weak').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const subId = btn.dataset.id;
+            if (!appState.academicProfile) appState.academicProfile = createInitialState().academicProfile;
+            if (!Array.isArray(appState.academicProfile.weakSubjectIds)) appState.academicProfile.weakSubjectIds = [];
+            const idx = appState.academicProfile.weakSubjectIds.indexOf(subId);
+            if (idx >= 0) {
+                appState.academicProfile.weakSubjectIds.splice(idx, 1);
+            } else {
+                appState.academicProfile.weakSubjectIds.push(subId);
+            }
+            saveAppState();
+            renderSubjectsTab();
+        });
+    });
+
+    container.querySelectorAll('.btn-sub-add-ch').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const subId = btn.dataset.id;
+            const modal = document.getElementById('modal-chapter-form');
+            const subIn = document.getElementById('chapter-input-subject-id');
+            const nameIn = document.getElementById('chapter-input-name');
+            if (modal && subIn) {
+                subIn.value = subId;
+                if (nameIn) nameIn.value = '';
+                modal.classList.remove('hidden');
+            }
+        });
+    });
+
+    container.querySelectorAll('.btn-toggle-ch-status').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const chId = btn.dataset.id;
+            const ch = (appState.chapters || []).find(c => c.id === chId);
+            if (ch) {
+                if (ch.status === 'completed') {
+                    ch.status = 'in_progress';
+                } else {
+                    ch.status = 'completed';
+                    ch.revisionCount = (ch.revisionCount || 0) + 1;
+                }
+                ch.updatedAt = new Date().toISOString();
+                saveAppState();
+                renderSubjectsTab();
+            }
+        });
+    });
+}
+
+// --------------------------------------------------------------------------
+// SESSIONS & TESTS CONTROLLERS
+// --------------------------------------------------------------------------
+
+function renderSessionsTab() {
+    const container = document.getElementById('study-sessions-list-container');
+    const hoursEl = document.getElementById('stat-study-total-hours');
+    const sessionsEl = document.getElementById('stat-study-total-sessions');
+    const questionsEl = document.getElementById('stat-study-questions');
+    const accuracyEl = document.getElementById('stat-study-accuracy');
+
+    const sessions = Array.isArray(appState.studySessions) ? appState.studySessions : [];
+    const totalMinutes = sessions.reduce((acc, s) => acc + (Number(s.duration) || 0), 0);
+    const totalQuestions = sessions.reduce((acc, s) => acc + (Number(s.questionsSolved) || 0), 0);
+
+    if (hoursEl) hoursEl.textContent = `${(totalMinutes / 60).toFixed(1)}h`;
+    if (sessionsEl) sessionsEl.textContent = sessions.length;
+    if (questionsEl) questionsEl.textContent = totalQuestions;
+
+    if (accuracyEl) {
+        const recordedAccs = sessions.filter(s => typeof s.accuracyPercent === 'number');
+        if (recordedAccs.length > 0) {
+            const avgAcc = Math.round(recordedAccs.reduce((a, b) => a + b.accuracyPercent, 0) / recordedAccs.length);
+            accuracyEl.textContent = `${avgAcc}%`;
+        } else {
+            accuracyEl.textContent = '—';
+        }
+    }
+
+    if (!container) return;
+
+    if (sessions.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding:var(--space-8);">
+                <div class="empty-title">No completed study sessions logged</div>
+                <p class="empty-description">Click "+ Log Study Session" to record your completed focus blocks.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Subject</th>
+                        <th>Duration</th>
+                        <th>Questions</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sessions.slice().reverse().map(s => {
+                        const sub = getSubjectById(s.subjectId);
+                        const subName = sub ? sub.name : (s.subjectId || 'Self Study');
+                        return `
+                            <tr>
+                                <td>${escapeHtml(s.date || s.createdAt.slice(0, 10))}</td>
+                                <td><strong>${escapeHtml(subName)}</strong> ${s.chapter ? `<span class="text-secondary text-small">(${escapeHtml(s.chapter)})</span>` : ''}</td>
+                                <td>${s.duration || 60} mins</td>
+                                <td>${s.questionsSolved || 0}</td>
+                                <td class="text-secondary">${escapeHtml(s.notes || '—')}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderTestsTab() {
+    const container = document.getElementById('mock-tests-list-container');
+    if (!container) return;
+
+    const tests = Array.isArray(appState.mockTests) ? appState.mockTests : [];
+    if (tests.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding:var(--space-8);">
+                <div class="empty-title">No mock tests or quizzes recorded</div>
+                <p class="empty-description">Click "+ Log Mock Test" to track diagnostics and practice exam scores.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Test Title</th>
+                        <th>Subject</th>
+                        <th>Score</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tests.slice().reverse().map(t => {
+                        const sub = getSubjectById(t.subjectId);
+                        return `
+                            <tr>
+                                <td>${escapeHtml(t.date || t.createdAt.slice(0, 10))}</td>
+                                <td><strong>${escapeHtml(t.title)}</strong></td>
+                                <td>${escapeHtml(sub ? sub.name : 'General')}</td>
+                                <td><span class="badge-status badge-completed">${t.scorePercent}% (${t.correctAnswers}/${t.totalQuestions})</span></td>
+                                <td>${t.durationMinutes || 60} mins</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function initRealisticPlanner() {
+    const btnGen = document.getElementById('btn-planner-generate');
+    const btnRegen = document.getElementById('btn-planner-regenerate');
+    const btnApply = document.getElementById('btn-planner-apply-tasks');
+    const dateInput = document.getElementById('planner-input-date');
+    const targetInput = document.getElementById('planner-input-target-hours');
+    const sessionLenInput = document.getElementById('planner-input-session-len');
+
+    if (dateInput) {
+        dateInput.value = plannerState.activeDate;
+        dateInput.addEventListener('change', () => {
+            plannerState.activeDate = dateInput.value;
+            renderPlannerTab();
+        });
+    }
+
+    if (btnGen) {
+        btnGen.addEventListener('click', () => {
+            const d = (dateInput && dateInput.value) || plannerState.activeDate;
+            const t = (targetInput && Number(targetInput.value)) || plannerState.targetHours;
+            const s = (sessionLenInput && Number(sessionLenInput.value)) || plannerState.sessionDuration;
+            plannerState.activeDate = d;
+            plannerState.targetHours = t;
+            plannerState.sessionDuration = s;
+
+            generateRealisticStudyPlan(d, t, s);
+            renderPlannerTab();
+        });
+    }
+
+    if (btnRegen) {
+        btnRegen.addEventListener('click', () => {
+            const d = (dateInput && dateInput.value) || plannerState.activeDate;
+            regeneratePlannerDay(d);
+        });
+    }
+
+    if (btnApply) {
+        btnApply.addEventListener('click', () => {
+            const d = (dateInput && dateInput.value) || plannerState.activeDate;
+            applyStudyPlanToTasks(d);
+        });
+    }
+
+    // Modal forms
+    const formPlanEdit = document.getElementById('form-planner-session-edit');
+    if (formPlanEdit) {
+        formPlanEdit.addEventListener('submit', e => {
+            e.preventDefault();
+            const id = plannerState.editingSessionId;
+            const s = (appState.studyPlans || []).find(p => p.id === id);
+            if (s) {
+                const subSel = document.getElementById('planner-edit-input-subject');
+                const chSel = document.getElementById('planner-edit-input-chapter');
+                const startIn = document.getElementById('planner-edit-input-start');
+                const endIn = document.getElementById('planner-edit-input-end');
+                const reasonIn = document.getElementById('planner-edit-input-reason');
+
+                if (subSel) s.subjectId = subSel.value;
+                if (chSel) s.chapterId = chSel.value;
+                if (startIn) s.startTime = startIn.value;
+                if (endIn) s.endTime = endIn.value;
+                if (reasonIn) s.reason = reasonIn.value;
+                s.durationMinutes = Math.max(15, timeToMinutes(s.endTime) - timeToMinutes(s.startTime));
+                s.updatedAt = new Date().toISOString();
+
+                saveAppState();
+                closePlannerEditModal();
+                renderPlannerTab();
+            }
+        });
+    }
+
+    const btnPlanEditClose = document.getElementById('btn-planner-edit-close');
+    const btnPlanEditCancel = document.getElementById('btn-planner-edit-cancel');
+    const btnPlanEditDelete = document.getElementById('btn-planner-edit-delete');
+    if (btnPlanEditClose) btnPlanEditClose.addEventListener('click', closePlannerEditModal);
+    if (btnPlanEditCancel) btnPlanEditCancel.addEventListener('click', closePlannerEditModal);
+    if (btnPlanEditDelete) {
+        btnPlanEditDelete.addEventListener('click', () => {
+            if (plannerState.editingSessionId) {
+                deletePlannedSession(plannerState.editingSessionId);
+                closePlannerEditModal();
+            }
+        });
+    }
+
+    // Subject form modal
+    const btnAddSub = document.getElementById('btn-add-subject');
+    const modalSub = document.getElementById('modal-subject-form');
+    const formSub = document.getElementById('form-subject');
+    const btnSubClose = document.getElementById('btn-subject-close');
+    const btnSubCancel = document.getElementById('btn-subject-cancel');
+
+    if (btnAddSub && modalSub) {
+        btnAddSub.addEventListener('click', () => {
+            const nameIn = document.getElementById('subject-input-name');
+            if (nameIn) nameIn.value = '';
+            modalSub.classList.remove('hidden');
+        });
+    }
+    if (btnSubClose && modalSub) btnSubClose.addEventListener('click', () => modalSub.classList.add('hidden'));
+    if (btnSubCancel && modalSub) btnSubCancel.addEventListener('click', () => modalSub.classList.add('hidden'));
+
+    if (formSub) {
+        formSub.addEventListener('submit', e => {
+            e.preventDefault();
+            const nameIn = document.getElementById('subject-input-name');
+            const catIn = document.getElementById('subject-input-category');
+            const weakIn = document.getElementById('subject-input-weak');
+            const nameVal = nameIn ? nameIn.value.trim() : '';
+            if (!nameVal) return;
+
+            const newSub = {
+                id: generateId(),
+                name: nameVal,
+                goalType: catIn ? catIn.value : 'Engineering',
+                active: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            appState.subjects.push(newSub);
+
+            if (weakIn && weakIn.value === 'true') {
+                if (!appState.academicProfile.weakSubjectIds) appState.academicProfile.weakSubjectIds = [];
+                appState.academicProfile.weakSubjectIds.push(newSub.id);
+            }
+
+            saveAppState();
+            if (modalSub) modalSub.classList.add('hidden');
+            renderSubjectsTab();
+        });
+    }
+
+    // Chapter form modal
+    const modalCh = document.getElementById('modal-chapter-form');
+    const formCh = document.getElementById('form-chapter');
+    const btnChClose = document.getElementById('btn-chapter-close');
+    const btnChCancel = document.getElementById('btn-chapter-cancel');
+
+    if (btnChClose && modalCh) btnChClose.addEventListener('click', () => modalCh.classList.add('hidden'));
+    if (btnChCancel && modalCh) btnChCancel.addEventListener('click', () => modalCh.classList.add('hidden'));
+
+    if (formCh) {
+        formCh.addEventListener('submit', e => {
+            e.preventDefault();
+            const subIdIn = document.getElementById('chapter-input-subject-id');
+            const nameIn = document.getElementById('chapter-input-name');
+            const statusIn = document.getElementById('chapter-input-status');
+            const revIn = document.getElementById('chapter-input-revisions');
+
+            const nameVal = nameIn ? nameIn.value.trim() : '';
+            const subIdVal = subIdIn ? subIdIn.value : null;
+            if (!nameVal || !subIdVal) return;
+
+            if (!Array.isArray(appState.chapters)) appState.chapters = [];
+            appState.chapters.push({
+                id: generateId(),
+                subjectId: subIdVal,
+                name: nameVal,
+                status: statusIn ? statusIn.value : 'not_started',
+                revisionCount: revIn ? Number(revIn.value) || 0 : 0,
+                order: appState.chapters.filter(c => c.subjectId === subIdVal).length + 1,
+                notes: "",
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+
+            saveAppState();
+            if (modalCh) modalCh.classList.add('hidden');
+            renderSubjectsTab();
+        });
+    }
+
+    // Session log modal
+    const btnLogSess = document.getElementById('btn-log-session');
+    const modalSess = document.getElementById('modal-session-form');
+    const formSess = document.getElementById('form-study-session');
+    const btnSessClose = document.getElementById('btn-session-close');
+    const btnSessCancel = document.getElementById('btn-session-cancel');
+
+    if (btnLogSess && modalSess) {
+        btnLogSess.addEventListener('click', () => {
+            const subSel = document.getElementById('session-input-subject');
+            const dateIn = document.getElementById('session-input-date');
+            if (subSel) {
+                subSel.innerHTML = (appState.subjects || []).map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
+            }
+            if (dateIn) dateIn.value = getTodayDateString();
+            modalSess.classList.remove('hidden');
+        });
+    }
+    if (btnSessClose && modalSess) btnSessClose.addEventListener('click', () => modalSess.classList.add('hidden'));
+    if (btnSessCancel && modalSess) btnSessCancel.addEventListener('click', () => modalSess.classList.add('hidden'));
+
+    if (formSess) {
+        formSess.addEventListener('submit', e => {
+            e.preventDefault();
+            const subSel = document.getElementById('session-input-subject');
+            const chSel = document.getElementById('session-input-chapter');
+            const dateIn = document.getElementById('session-input-date');
+            const durIn = document.getElementById('session-input-duration');
+            const qIn = document.getElementById('session-input-questions');
+            const notesIn = document.getElementById('session-input-notes');
+
+            const newSession = {
+                id: generateId(),
+                subjectId: subSel ? subSel.value : null,
+                chapter: chSel ? chSel.value : "",
+                date: (dateIn && dateIn.value) || getTodayDateString(),
+                duration: durIn ? Number(durIn.value) || 60 : 60,
+                questionsSolved: qIn ? Number(qIn.value) || 0 : 0,
+                notes: notesIn ? notesIn.value.trim() : "",
+                createdAt: new Date().toISOString()
+            };
+            appState.studySessions.push(newSession);
+            saveAppState();
+            if (modalSess) modalSess.classList.add('hidden');
+            renderSessionsTab();
+        });
+    }
+
+    // Mock test log modal
+    const btnLogTest = document.getElementById('btn-log-mock-test');
+    const modalTest = document.getElementById('modal-test-form');
+    const formTest = document.getElementById('form-mock-test');
+    const btnTestClose = document.getElementById('btn-test-close');
+    const btnTestCancel = document.getElementById('btn-test-cancel');
+
+    if (btnLogTest && modalTest) {
+        btnLogTest.addEventListener('click', () => {
+            const subSel = document.getElementById('test-input-subject');
+            const dateIn = document.getElementById('test-input-date');
+            if (subSel) {
+                subSel.innerHTML = (appState.subjects || []).map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
+            }
+            if (dateIn) dateIn.value = getTodayDateString();
+            modalTest.classList.remove('hidden');
+        });
+    }
+    if (btnTestClose && modalTest) btnTestClose.addEventListener('click', () => modalTest.classList.add('hidden'));
+    if (btnTestCancel && modalTest) btnTestCancel.addEventListener('click', () => modalTest.classList.add('hidden'));
+
+    if (formTest) {
+        formTest.addEventListener('submit', e => {
+            e.preventDefault();
+            const titleIn = document.getElementById('test-input-title');
+            const subSel = document.getElementById('test-input-subject');
+            const dateIn = document.getElementById('test-input-date');
+            const totIn = document.getElementById('test-input-total');
+            const corrIn = document.getElementById('test-input-correct');
+            const durIn = document.getElementById('test-input-duration');
+
+            const totVal = totIn ? Number(totIn.value) || 1 : 1;
+            const corrVal = corrIn ? Number(corrIn.value) || 0 : 0;
+            const scorePercent = Math.round((corrVal / totVal) * 100);
+
+            if (!Array.isArray(appState.mockTests)) appState.mockTests = [];
+            appState.mockTests.push({
+                id: generateId(),
+                title: titleIn ? titleIn.value.trim() : 'Mock Test',
+                subjectId: subSel ? subSel.value : null,
+                date: (dateIn && dateIn.value) || getTodayDateString(),
+                totalQuestions: totVal,
+                correctAnswers: corrVal,
+                scorePercent,
+                durationMinutes: durIn ? Number(durIn.value) || 60 : 60,
+                createdAt: new Date().toISOString()
+            });
+
+            saveAppState();
+            if (modalTest) modalTest.classList.add('hidden');
+            renderTestsTab();
+        });
+    }
+
+    console.log('[Study Planner] Phase 7 initialized.');
+}
+
+
+// ==========================================================================
+// PHASE 8 — HEALTH & HABITS MODULE
+// ==========================================================================
+
+const wellnessState = {
+    activeTab: 'habits'
+};
+
+/**
+ * Calculates consecutive daily streak backwards from today (or yesterday).
+ * Mathematically supported; never fabricates.
+ */
+function computeHabitStreak(habit) {
+    if (!habit || !Array.isArray(habit.completions) || habit.completions.length === 0) {
+        return 0;
+    }
+
+    const todayStr = getTodayDateString();
+    const sorted = Array.from(new Set(habit.completions)).sort().reverse();
+
+    let streak = 0;
+    let checkDate = new Date();
+
+    // If today is completed, start streak from today; otherwise check if yesterday was completed
+    if (sorted.includes(todayStr)) {
+        streak = 1;
+        checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+        checkDate.setDate(checkDate.getDate() - 1);
+        const yestStr = checkDate.toISOString().slice(0, 10);
+        if (!sorted.includes(yestStr)) {
+            return 0;
+        }
+        streak = 1;
+        checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    while (true) {
+        const dStr = checkDate.toISOString().slice(0, 10);
+        if (sorted.includes(dStr)) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+            break;
+        }
+    }
+
+    return streak;
+}
+
+function renderHabitsList() {
+    const container = document.getElementById('habits-list-container');
+    if (!container) return;
+
+    const habits = Array.isArray(appState.habits) ? appState.habits : [];
+    const todayStr = getTodayDateString();
+
+    if (habits.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1; padding:var(--space-8);">
+                <div class="empty-title">No habits created yet</div>
+                <p class="empty-description">Click "+ Add Habit" to track your daily execution routines.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = habits.map(h => {
+        const isDoneToday = Array.isArray(h.completions) && h.completions.includes(todayStr);
+        const streak = computeHabitStreak(h);
+        h.streak = streak; // keep state sync
+
+        return `
+            <div class="habit-card ${isDoneToday ? 'completed' : ''}" data-habit-id="${escapeHtml(h.id)}">
+                <div style="flex:1;">
+                    <div style="font-weight:600; font-size:var(--font-size-body);">${escapeHtml(h.title)}</div>
+                    <div class="text-caption text-secondary">Target: ${h.targetDays || 7} days/week</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:var(--space-3);">
+                    <div class="habit-streak">${streak}d streak</div>
+                    <button class="habit-check-btn ${isDoneToday ? 'checked' : ''} btn-toggle-habit" data-id="${escapeHtml(h.id)}" title="${isDoneToday ? 'Mark not done' : 'Mark done for today'}">
+                        ${isDoneToday ? '✓' : ''}
+                    </button>
+                    <button class="btn-link text-danger text-small btn-del-habit" data-id="${escapeHtml(h.id)}" title="Delete habit">&times;</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.querySelectorAll('.btn-toggle-habit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const hId = btn.dataset.id;
+            const h = (appState.habits || []).find(item => item.id === hId);
+            if (!h) return;
+            if (!Array.isArray(h.completions)) h.completions = [];
+
+            const idx = h.completions.indexOf(todayStr);
+            if (idx >= 0) {
+                h.completions.splice(idx, 1);
+            } else {
+                h.completions.push(todayStr);
+            }
+            h.streak = computeHabitStreak(h);
+            saveAppState();
+            renderHabitsList();
+        });
+    });
+
+    container.querySelectorAll('.btn-del-habit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const hId = btn.dataset.id;
+            if (confirm("Delete this habit and its history?")) {
+                appState.habits = (appState.habits || []).filter(h => h.id !== hId);
+                saveAppState();
+                renderHabitsList();
+            }
+        });
+    });
+}
+
+function renderSleepLogs() {
+    const container = document.getElementById('sleep-logs-container');
+    const avgEl = document.getElementById('stat-sleep-avg');
+    const lastBedEl = document.getElementById('stat-sleep-last-bed');
+    const lastWakeEl = document.getElementById('stat-sleep-last-wake');
+
+    const logs = Array.isArray(appState.sleepLogs) ? appState.sleepLogs : [];
+
+    if (logs.length > 0) {
+        const totalDur = logs.reduce((acc, l) => acc + (Number(l.duration) || 0), 0);
+        if (avgEl) avgEl.textContent = `${(totalDur / logs.length).toFixed(1)}h`;
+        const latest = logs[logs.length - 1];
+        if (lastBedEl) lastBedEl.textContent = formatTimeDisplay(latest.bedtime) || '—';
+        if (lastWakeEl) lastWakeEl.textContent = formatTimeDisplay(latest.wakeTime) || '—';
+    } else {
+        if (avgEl) avgEl.textContent = '—';
+        if (lastBedEl) lastBedEl.textContent = '—';
+        if (lastWakeEl) lastWakeEl.textContent = '—';
+    }
+
+    if (!container) return;
+
+    if (logs.length === 0) {
+        container.innerHTML = `<div class="empty-state" style="padding:var(--space-6);"><p class="text-secondary">No sleep entries logged yet.</p></div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Bedtime</th>
+                    <th>Wake Time</th>
+                    <th>Duration</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${logs.slice().reverse().map(l => `
+                    <tr>
+                        <td>${escapeHtml(l.date)}</td>
+                        <td>${escapeHtml(formatTimeDisplay(l.bedtime))}</td>
+                        <td>${escapeHtml(formatTimeDisplay(l.wakeTime))}</td>
+                        <td><strong>${l.duration}h</strong></td>
+                        <td class="text-secondary">${escapeHtml(l.notes || '—')}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderWaterCard() {
+    const textEl = document.getElementById('water-progress-text');
+    const fillEl = document.getElementById('water-progress-fill');
+    const targetInput = document.getElementById('water-target-input');
+    const historyEl = document.getElementById('water-logs-history');
+
+    const todayStr = getTodayDateString();
+    if (!Array.isArray(appState.waterLogs)) appState.waterLogs = [];
+
+    let todayLog = appState.waterLogs.find(w => w.date === todayStr);
+    if (!todayLog) {
+        const targetVal = (targetInput && Number(targetInput.value)) || 2500;
+        todayLog = { id: generateId(), date: todayStr, amountMl: 0, targetMl: targetVal, entries: [] };
+        appState.waterLogs.push(todayLog);
+    }
+
+    const pct = Math.min(100, Math.round((todayLog.amountMl / (todayLog.targetMl || 2500)) * 100));
+
+    if (textEl) textEl.textContent = `${todayLog.amountMl} / ${todayLog.targetMl} ml (${pct}%)`;
+    if (fillEl) fillEl.style.width = `${pct}%`;
+    if (targetInput) targetInput.value = todayLog.targetMl;
+
+    if (historyEl) {
+        const prevLogs = appState.waterLogs.filter(w => w.amountMl > 0).slice().reverse();
+        if (prevLogs.length === 0) {
+            historyEl.innerHTML = `<p class="text-small text-muted">No hydration logs recorded.</p>`;
+        } else {
+            historyEl.innerHTML = `
+                <table class="data-table">
+                    <thead><tr><th>Date</th><th>Logged Amount</th><th>Target</th><th>Progress</th></tr></thead>
+                    <tbody>
+                        ${prevLogs.map(w => `
+                            <tr>
+                                <td>${escapeHtml(w.date)}</td>
+                                <td><strong>${w.amountMl} ml</strong></td>
+                                <td>${w.targetMl} ml</td>
+                                <td>${Math.round((w.amountMl / w.targetMl) * 100)}%</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+    }
+}
+
+function renderExerciseLogs() {
+    const container = document.getElementById('exercise-logs-container');
+    if (!container) return;
+
+    const logs = Array.isArray(appState.exerciseLogs) ? appState.exerciseLogs : [];
+    if (logs.length === 0) {
+        container.innerHTML = `<div class="empty-state" style="padding:var(--space-6);"><p class="text-secondary">No exercise sessions logged yet.</p></div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Activity</th>
+                    <th>Duration</th>
+                    <th>Intensity</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${logs.slice().reverse().map(l => `
+                    <tr>
+                        <td>${escapeHtml(l.date)}</td>
+                        <td><strong>${escapeHtml(l.activity || l.type || 'Exercise')}</strong></td>
+                        <td>${l.durationMinutes || 30} mins</td>
+                        <td><span class="badge-status badge-in-progress">${escapeHtml(l.intensity || 'moderate')}</span></td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderMoodLogs() {
+    const container = document.getElementById('mood-logs-container');
+    if (!container) return;
+
+    const logs = Array.isArray(appState.moodLogs) ? appState.moodLogs : [];
+    if (logs.length === 0) {
+        container.innerHTML = `<div class="empty-state" style="padding:var(--space-6);"><p class="text-secondary">No mood check-ins logged yet.</p></div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>State</th>
+                    <th>Energy (1–5)</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${logs.slice().reverse().map(l => `
+                    <tr>
+                        <td>${escapeHtml(l.date)}</td>
+                        <td><strong>${escapeHtml(l.label || 'Focused')}</strong></td>
+                        <td>${l.energyLevel || 3} / 5</td>
+                        <td class="text-secondary">${escapeHtml(l.notes || '—')}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderWellnessView() {
+    switch (wellnessState.activeTab) {
+        case 'habits':   renderHabitsList();   break;
+        case 'sleep':    renderSleepLogs();    break;
+        case 'water':    renderWaterCard();    break;
+        case 'exercise': renderExerciseLogs(); break;
+        case 'mood':     renderMoodLogs();     break;
+        default:         renderHabitsList();   break;
+    }
+}
+
+function initWellnessModule() {
+    const navBtns = document.querySelectorAll('.wellness-nav-btn');
+    navBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.getAttribute('data-wellness-tab');
+            navBtns.forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
+            btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
+
+            document.querySelectorAll('.wellness-tab-panel').forEach(p => p.classList.add('hidden'));
+            const targetPanel = document.getElementById(`wellness-tab-${tab}`);
+            if (targetPanel) targetPanel.classList.remove('hidden');
+
+            wellnessState.activeTab = tab;
+            renderWellnessView();
+        });
+    });
+
+    // Habit modal
+    const btnAddHabit = document.getElementById('btn-add-habit');
+    const modalHabit = document.getElementById('modal-habit-form');
+    const formHabit = document.getElementById('form-habit');
+    const btnHabitClose = document.getElementById('btn-habit-close');
+    const btnHabitCancel = document.getElementById('btn-habit-cancel');
+
+    if (btnAddHabit && modalHabit) {
+        btnAddHabit.addEventListener('click', () => {
+            const tIn = document.getElementById('habit-input-title');
+            if (tIn) tIn.value = '';
+            modalHabit.classList.remove('hidden');
+        });
+    }
+    if (btnHabitClose && modalHabit) btnHabitClose.addEventListener('click', () => modalHabit.classList.add('hidden'));
+    if (btnHabitCancel && modalHabit) btnHabitCancel.addEventListener('click', () => modalHabit.classList.add('hidden'));
+
+    if (formHabit) {
+        formHabit.addEventListener('submit', e => {
+            e.preventDefault();
+            const tIn = document.getElementById('habit-input-title');
+            const targetIn = document.getElementById('habit-input-target');
+            const titleVal = tIn ? tIn.value.trim() : '';
+            if (!titleVal) return;
+
+            if (!Array.isArray(appState.habits)) appState.habits = [];
+            appState.habits.push({
+                id: generateId(),
+                title: titleVal,
+                frequency: 'daily',
+                targetDays: targetIn ? Number(targetIn.value) || 7 : 7,
+                streak: 0,
+                completions: [],
+                archived: false,
+                createdAt: new Date().toISOString()
+            });
+
+            saveAppState();
+            if (modalHabit) modalHabit.classList.add('hidden');
+            renderHabitsList();
+        });
+    }
+
+    // Sleep modal
+    const btnLogSleep = document.getElementById('btn-log-sleep');
+    const modalSleep = document.getElementById('modal-sleep-form');
+    const formSleep = document.getElementById('form-sleep');
+    const btnSleepClose = document.getElementById('btn-sleep-close');
+    const btnSleepCancel = document.getElementById('btn-sleep-cancel');
+
+    if (btnLogSleep && modalSleep) {
+        btnLogSleep.addEventListener('click', () => {
+            const dIn = document.getElementById('sleep-input-date');
+            if (dIn) dIn.value = getTodayDateString();
+            modalSleep.classList.remove('hidden');
+        });
+    }
+    if (btnSleepClose && modalSleep) btnSleepClose.addEventListener('click', () => modalSleep.classList.add('hidden'));
+    if (btnSleepCancel && modalSleep) btnSleepCancel.addEventListener('click', () => modalSleep.classList.add('hidden'));
+
+    if (formSleep) {
+        formSleep.addEventListener('submit', e => {
+            e.preventDefault();
+            const dIn = document.getElementById('sleep-input-date');
+            const bedIn = document.getElementById('sleep-input-bed');
+            const wakeIn = document.getElementById('sleep-input-wake');
+            const noteIn = document.getElementById('sleep-input-notes');
+
+            const bedMins = timeToMinutes(bedIn ? bedIn.value : '23:30');
+            const wakeMins = timeToMinutes(wakeIn ? wakeIn.value : '07:15');
+
+            // Handle overnight duration
+            let durMins = wakeMins - bedMins;
+            if (durMins < 0) durMins += 24 * 60;
+            const durHours = Number((durMins / 60).toFixed(2));
+
+            if (!Array.isArray(appState.sleepLogs)) appState.sleepLogs = [];
+            appState.sleepLogs.push({
+                id: generateId(),
+                date: (dIn && dIn.value) || getTodayDateString(),
+                bedtime: bedIn ? bedIn.value : '23:30',
+                wakeTime: wakeIn ? wakeIn.value : '07:15',
+                duration: durHours,
+                notes: noteIn ? noteIn.value.trim() : '',
+                createdAt: new Date().toISOString()
+            });
+
+            saveAppState();
+            if (modalSleep) modalSleep.classList.add('hidden');
+            renderSleepLogs();
+        });
+    }
+
+    // Water buttons
+    const btnW250 = document.getElementById('btn-water-add-250');
+    const btnW500 = document.getElementById('btn-water-add-500');
+    const btnWReset = document.getElementById('btn-water-reset-today');
+    const targetInput = document.getElementById('water-target-input');
+
+    function addWater(amount) {
+        const todayStr = getTodayDateString();
+        let log = (appState.waterLogs || []).find(w => w.date === todayStr);
+        if (!log) {
+            log = { id: generateId(), date: todayStr, amountMl: 0, targetMl: 2500, entries: [] };
+            appState.waterLogs.push(log);
+        }
+        log.amountMl = Math.max(0, (log.amountMl || 0) + amount);
+        saveAppState();
+        renderWaterCard();
+    }
+
+    if (btnW250) btnW250.addEventListener('click', () => addWater(250));
+    if (btnW500) btnW500.addEventListener('click', () => addWater(500));
+    if (btnWReset) {
+        btnWReset.addEventListener('click', () => {
+            const todayStr = getTodayDateString();
+            const log = (appState.waterLogs || []).find(w => w.date === todayStr);
+            if (log) log.amountMl = 0;
+            saveAppState();
+            renderWaterCard();
+        });
+    }
+    if (targetInput) {
+        targetInput.addEventListener('change', () => {
+            const todayStr = getTodayDateString();
+            const log = (appState.waterLogs || []).find(w => w.date === todayStr);
+            if (log) log.targetMl = Number(targetInput.value) || 2500;
+            saveAppState();
+            renderWaterCard();
+        });
+    }
+
+    // Exercise modal
+    const btnLogEx = document.getElementById('btn-log-exercise');
+    const modalEx = document.getElementById('modal-exercise-form');
+    const formEx = document.getElementById('form-exercise');
+    const btnExClose = document.getElementById('btn-exercise-close');
+    const btnExCancel = document.getElementById('btn-exercise-cancel');
+
+    if (btnLogEx && modalEx) btnLogEx.addEventListener('click', () => modalEx.classList.remove('hidden'));
+    if (btnExClose && modalEx) btnExClose.addEventListener('click', () => modalEx.classList.add('hidden'));
+    if (btnExCancel && modalEx) btnExCancel.addEventListener('click', () => modalEx.classList.add('hidden'));
+
+    if (formEx) {
+        formEx.addEventListener('submit', e => {
+            e.preventDefault();
+            const actIn = document.getElementById('exercise-input-activity');
+            const durIn = document.getElementById('exercise-input-duration');
+            const intIn = document.getElementById('exercise-input-intensity');
+
+            if (!Array.isArray(appState.exerciseLogs)) appState.exerciseLogs = [];
+            appState.exerciseLogs.push({
+                id: generateId(),
+                date: getTodayDateString(),
+                activity: actIn ? actIn.value.trim() : 'Exercise',
+                durationMinutes: durIn ? Number(durIn.value) || 30 : 30,
+                intensity: intIn ? intIn.value : 'moderate',
+                createdAt: new Date().toISOString()
+            });
+
+            saveAppState();
+            if (modalEx) modalEx.classList.add('hidden');
+            renderExerciseLogs();
+        });
+    }
+
+    // Mood modal
+    const btnLogMood = document.getElementById('btn-log-mood');
+    const modalMood = document.getElementById('modal-mood-form');
+    const formMood = document.getElementById('form-mood');
+    const btnMoodClose = document.getElementById('btn-mood-close');
+    const btnMoodCancel = document.getElementById('btn-mood-cancel');
+
+    if (btnLogMood && modalMood) btnLogMood.addEventListener('click', () => modalMood.classList.remove('hidden'));
+    if (btnMoodClose && modalMood) btnMoodClose.addEventListener('click', () => modalMood.classList.add('hidden'));
+    if (btnMoodCancel && modalMood) btnMoodCancel.addEventListener('click', () => modalMood.classList.add('hidden'));
+
+    if (formMood) {
+        formMood.addEventListener('submit', e => {
+            e.preventDefault();
+            const lblIn = document.getElementById('mood-input-label');
+            const engIn = document.getElementById('mood-input-energy');
+            const nIn = document.getElementById('mood-input-notes');
+
+            if (!Array.isArray(appState.moodLogs)) appState.moodLogs = [];
+            appState.moodLogs.push({
+                id: generateId(),
+                date: getTodayDateString(),
+                label: lblIn ? lblIn.value : 'Focused',
+                energyLevel: engIn ? Number(engIn.value) || 3 : 3,
+                notes: nIn ? nIn.value.trim() : '',
+                createdAt: new Date().toISOString()
+            });
+
+            saveAppState();
+            if (modalMood) modalMood.classList.add('hidden');
+            renderMoodLogs();
+        });
+    }
+
+    console.log('[Wellness] Phase 8 initialized.');
+}
+
+
+// ==========================================================================
+// PHASE 9 — RULE-BASED AI COACH V1
+// 100% Deterministic • Operates Exclusively on Stored Data • Zero Cloud APIs
+// ==========================================================================
+
+/**
+ * Evaluates behavioral patterns and constraints across stored application state.
+ * Returns observations, conflicts, and actionable adjustments with factual citations.
+ */
+function evaluateAICoach(state = appState) {
+    const tasks = Array.isArray(state.tasks) ? state.tasks : [];
+    const accRecords = Array.isArray(state.accountabilityRecords) ? state.accountabilityRecords : [];
+    const studySessions = Array.isArray(state.studySessions) ? state.studySessions : [];
+    const sleepLogs = Array.isArray(state.sleepLogs) ? state.sleepLogs : [];
+    const habits = Array.isArray(state.habits) ? state.habits : [];
+    const timetable = (state.timetable && Array.isArray(state.timetable.entries)) ? state.timetable.entries : [];
+
+    const totalEvents = tasks.length + studySessions.length + sleepLogs.length;
+
+    // Data Sufficiency Threshold: requires at least 3 total records
+    if (totalEvents < 3) {
+        return {
+            hasEnoughData: false,
+            message: "Not enough data yet to identify a reliable pattern. Continue logging your tasks, study sessions, and routines.",
+            conflicts: [],
+            patterns: [],
+            adjustments: []
+        };
+    }
+
+    const conflicts = [];
+    const patterns = [];
+    const adjustments = [];
+
+    // Rule 1: Task Overload Detection (Days with > 5 tasks or > 8h scheduled)
+    const taskCountByDate = {};
+    const taskHoursByDate = {};
+    tasks.filter(t => t.status === 'planned').forEach(t => {
+        if (!t.date) return;
+        taskCountByDate[t.date] = (taskCountByDate[t.date] || 0) + 1;
+        const durHours = (t.estimatedDuration || 60) / 60;
+        taskHoursByDate[t.date] = (taskHoursByDate[t.date] || 0) + durHours;
+    });
+
+    Object.keys(taskCountByDate).forEach(d => {
+        if (taskCountByDate[d] >= 6 || taskHoursByDate[d] >= 8) {
+            conflicts.push({
+                type: 'overload',
+                severity: 'warning',
+                title: `High Task Overload on ${d}`,
+                evidence: `${taskCountByDate[d]} planned tasks totaling ${taskHoursByDate[d].toFixed(1)} scheduled hours.`,
+                suggestion: `Days with more than 5 scheduled tasks exhibit higher miss rates. Consider deferring low-priority items.`
+            });
+        }
+    });
+
+    // Rule 2: Timetable / Task Collision
+    const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    tasks.filter(t => t.status === 'planned' && t.startTime && t.endTime && t.date).forEach(t => {
+        const dObj = new Date(t.date + 'T12:00:00');
+        const dayOfWeek = dayNames[dObj.getDay()];
+        const tStart = timeToMinutes(t.startTime);
+        const tEnd = timeToMinutes(t.endTime);
+
+        const overlappingClass = timetable.find(c => {
+            if (c.day !== dayOfWeek) return false;
+            const cStart = timeToMinutes(c.startTime);
+            const cEnd = timeToMinutes(c.endTime);
+            return (tStart < cEnd && tEnd > cStart);
+        });
+
+        if (overlappingClass) {
+            conflicts.push({
+                type: 'collision',
+                severity: 'error',
+                title: `Task Clashes with Timetable on ${t.date}`,
+                evidence: `Task "${t.title}" (${formatTimeDisplay(t.startTime)}–${formatTimeDisplay(t.endTime)}) overlaps with "${overlappingClass.title}" (${formatTimeDisplay(overlappingClass.startTime)}–${formatTimeDisplay(overlappingClass.endTime)}).`,
+                suggestion: `Move "${t.title}" to an open window outside class hours to prevent an unavoidable miss.`
+            });
+        }
+    });
+
+    // Rule 3: Repeated Miss Reason Pattern (>= 40% of missed tasks with same reason)
+    const missedRecords = accRecords.filter(r => r.status === 'missed');
+    if (missedRecords.length >= 3) {
+        const reasonCounts = {};
+        missedRecords.forEach(r => {
+            const reason = r.reason || 'Other / Unspecified';
+            reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
+        });
+
+        Object.keys(reasonCounts).forEach(reason => {
+            const count = reasonCounts[reason];
+            const pct = Math.round((count / missedRecords.length) * 100);
+            if (pct >= 40) {
+                patterns.push({
+                    title: `Primary Miss Factor: ${reason}`,
+                    evidence: `"${reason}" accounts for ${count} of your last ${missedRecords.length} missed tasks (${pct}%).`,
+                    impact: `Identified as the dominant operational blocker interrupting task momentum.`
+                });
+
+                if (reason.toLowerCase().includes('fatigue') || reason.toLowerCase().includes('energy')) {
+                    adjustments.push({
+                        action: `Shift Demanding Tasks Earlier`,
+                        detail: `Schedule high-focus academic tasks during morning or early afternoon windows when energy levels are highest.`
+                    });
+                } else if (reason.toLowerCase().includes('estimation') || reason.toLowerCase().includes('time')) {
+                    adjustments.push({
+                        action: `Add 25% Buffer to Block Durations`,
+                        detail: `Increase estimated durations for complex problem solving to prevent schedule spill-overs.`
+                    });
+                }
+            }
+        });
+    }
+
+    // Rule 4: Evening Vulnerability Window (>= 50% misses after 19:00)
+    const missedWithTime = tasks.filter(t => t.status === 'missed' && t.startTime);
+    if (missedWithTime.length >= 3) {
+        const eveningMisses = missedWithTime.filter(t => timeToMinutes(t.startTime) >= 19 * 60).length;
+        const evePct = Math.round((eveningMisses / missedWithTime.length) * 100);
+        if (evePct >= 50) {
+            patterns.push({
+                title: `Evening Vulnerability Window`,
+                evidence: `${eveningMisses} of your ${missedWithTime.length} timed missed tasks occurred after 7:00 PM (${evePct}%).`,
+                impact: `Tasks scheduled late in the evening show significantly higher miss likelihood due to cumulative cognitive load.`
+            });
+            adjustments.push({
+                action: `Cap Evening Workload`,
+                detail: `Reserve post-7 PM windows exclusively for light review or habit routines, not deep problem solving.`
+            });
+        }
+    }
+
+    // Rule 5: Habit Momentum Alert
+    habits.forEach(h => {
+        const streak = computeHabitStreak(h);
+        const todayDone = Array.isArray(h.completions) && h.completions.includes(getTodayDateString());
+        if (streak >= 2 && !todayDone) {
+            patterns.push({
+                title: `Streak Protection: "${h.title}"`,
+                evidence: `Currently on a ${streak}-day consecutive streak. Not yet logged for today.`,
+                impact: `Completing this habit today preserves your streak.`
+            });
+        }
+    });
+
+    // Rule 6: Sleep Correlation
+    if (sleepLogs.length >= 3) {
+        const shortSleepDates = sleepLogs.filter(s => Number(s.duration) < 6).map(s => s.date);
+        const nextDayMisses = tasks.filter(t => t.status === 'missed' && shortSleepDates.includes(t.date)).length;
+        if (nextDayMisses >= 1) {
+            patterns.push({
+                title: `Sleep Deficit Correlation`,
+                evidence: `${nextDayMisses} task misses occurred on dates where sleep was recorded below 6 hours.`,
+                impact: `Sleep consistency directly stabilizes daily task execution rates.`
+            });
+        }
+    }
+
+    // Default recovery adjustment if recent misses exist
+    if (missedRecords.length >= 2) {
+        adjustments.push({
+            action: `Post-Miss Stabilization`,
+            detail: `After missed tasks, avoid compensatory over-scheduling. Focus on executing 2 high-priority tasks cleanly today.`
+        });
+    }
+
+    return {
+        hasEnoughData: true,
+        conflicts,
+        patterns,
+        adjustments
+    };
+}
+
+function renderAICoachView() {
+    const analysis = evaluateAICoach(appState);
+    const badgeEl = document.getElementById('aicoach-rules-triggered-badge');
+    const titleEl = document.getElementById('aicoach-data-sufficiency-title');
+    const descEl = document.getElementById('aicoach-data-sufficiency-desc');
+    const conflictsContainer = document.getElementById('aicoach-conflicts-container');
+    const patternsContainer = document.getElementById('aicoach-patterns-container');
+    const adjustmentsContainer = document.getElementById('aicoach-adjustments-container');
+
+    if (!analysis.hasEnoughData) {
+        if (badgeEl) badgeEl.textContent = 'Insufficient data';
+        if (titleEl) titleEl.textContent = 'Accumulating Behavioral Baseline';
+        if (descEl) descEl.textContent = analysis.message;
+        if (conflictsContainer) conflictsContainer.innerHTML = `<p class="text-secondary text-small">No conflicts evaluated yet.</p>`;
+        if (patternsContainer) patternsContainer.innerHTML = `<p class="text-secondary text-small">Patterns emerge as you record completions and missed reasons.</p>`;
+        if (adjustmentsContainer) adjustmentsContainer.innerHTML = `<p class="text-secondary text-small">Adjustments will be suggested when execution data is available.</p>`;
+        return;
+    }
+
+    const totalActiveRules = analysis.conflicts.length + analysis.patterns.length + analysis.adjustments.length;
+    if (badgeEl) badgeEl.textContent = `${totalActiveRules} active observation(s)`;
+    if (titleEl) titleEl.textContent = `Active Operational Insights`;
+    if (descEl) descEl.textContent = `All observations are strictly evaluated from your stored tasks, timetable, habits, and accountability logs.`;
+
+    // Render conflicts
+    if (conflictsContainer) {
+        if (analysis.conflicts.length === 0) {
+            conflictsContainer.innerHTML = `<p class="text-small text-muted">No schedule conflicts or daily overload detected.</p>`;
+        } else {
+            conflictsContainer.innerHTML = analysis.conflicts.map(c => `
+                <div class="alert alert-warning mb-sm">
+                    <strong>${escapeHtml(c.title)}:</strong> ${escapeHtml(c.evidence)}
+                    <div class="mt-xs text-small">${escapeHtml(c.suggestion)}</div>
+                </div>
+            `).join('');
+        }
+    }
+
+    // Render patterns
+    if (patternsContainer) {
+        if (analysis.patterns.length === 0) {
+            patternsContainer.innerHTML = `<p class="text-small text-muted">No recurring bottleneck patterns identified yet.</p>`;
+        } else {
+            patternsContainer.innerHTML = analysis.patterns.map(p => `
+                <div class="planner-card">
+                    <strong style="color:var(--color-brand);">${escapeHtml(p.title)}</strong>
+                    <div class="body-text text-secondary mt-xs">${escapeHtml(p.evidence)}</div>
+                    <div class="card-caption text-muted mt-xs">${escapeHtml(p.impact)}</div>
+                </div>
+            `).join('');
+        }
+    }
+
+    // Render adjustments
+    if (adjustmentsContainer) {
+        if (analysis.adjustments.length === 0) {
+            adjustmentsContainer.innerHTML = `<p class="text-small text-muted">Your current schedule execution is well-balanced.</p>`;
+        } else {
+            adjustmentsContainer.innerHTML = analysis.adjustments.map(a => `
+                <div class="planner-card mb-xs">
+                    <div style="font-weight:600; font-size:var(--font-size-body);">${escapeHtml(a.action)}</div>
+                    <div class="text-secondary text-small mt-xs">${escapeHtml(a.detail)}</div>
+                </div>
+            `).join('');
+        }
+    }
+}
+
+function initAICoachModule() {
+    const btnRefresh = document.getElementById('btn-refresh-aicoach');
+    if (btnRefresh) {
+        btnRefresh.addEventListener('click', () => {
+            renderAICoachView();
+        });
+    }
+    console.log('[AI Coach] Phase 9 initialized.');
+}
+
+
+// ==========================================================================
+// PHASE 10 — REMINDERS MODULE
+// Local Storage Alerts • Notification API • Accountability Lifecycle Link
+// ==========================================================================
+
+const remindersState = {
+    activeCategory: 'all'
+};
+
+function renderRemindersView() {
+    const container = document.getElementById('reminders-list-container');
+    const badgeEl = document.getElementById('reminders-count-badge');
+    const permText = document.getElementById('reminder-permission-status-text');
+
+    if (permText && typeof Notification !== 'undefined') {
+        permText.textContent = `Notification permission: ${Notification.permission.toUpperCase()}. Local alerts fire when tab is open.`;
+    }
+
+    const reminders = Array.isArray(appState.reminders) ? appState.reminders : [];
+    const filtered = reminders.filter(r => {
+        if (remindersState.activeCategory === 'all') return true;
+        return (r.category || '').toLowerCase() === remindersState.activeCategory;
+    });
+
+    if (badgeEl) {
+        const activeCount = reminders.filter(r => r.enabled && !r.handled).length;
+        badgeEl.textContent = `${activeCount} active`;
+    }
+
+    if (!container) return;
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding:var(--space-8);">
+                <div class="empty-title">No reminders in this category</div>
+                <p class="empty-description">Click "+ Add Reminder" above to set a scheduled execution prompt.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = filtered.map(r => `
+        <div class="reminder-card ${r.handled ? 'handled' : ''}" data-reminder-id="${escapeHtml(r.id)}">
+            <div style="flex:1;">
+                <div style="display:flex; align-items:center; gap:var(--space-2);">
+                    <span class="reminder-category-pill">${escapeHtml(r.category || 'other')}</span>
+                    <strong style="font-size:var(--font-size-body);">${escapeHtml(r.title)}</strong>
+                </div>
+                <div class="text-caption text-secondary mt-xs">
+                    Scheduled: ${escapeHtml(r.dateTime.replace('T', ' '))}
+                    ${r.handled ? '<span class="ml-xs text-muted">(Handled)</span>' : ''}
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary btn-sm btn-toggle-rem" data-id="${escapeHtml(r.id)}">
+                    ${r.enabled ? 'Enabled' : 'Disabled'}
+                </button>
+                <button class="btn btn-primary btn-sm btn-handle-rem" data-id="${escapeHtml(r.id)}">
+                    ${r.handled ? 'Reopen' : 'Done'}
+                </button>
+                <button class="btn btn-danger btn-sm btn-del-rem" data-id="${escapeHtml(r.id)}">&times;</button>
+            </div>
+        </div>
+    `).join('');
+
+    container.querySelectorAll('.btn-toggle-rem').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const r = (appState.reminders || []).find(item => item.id === btn.dataset.id);
+            if (r) {
+                r.enabled = !r.enabled;
+                saveAppState();
+                renderRemindersView();
+            }
+        });
+    });
+
+    container.querySelectorAll('.btn-handle-rem').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const r = (appState.reminders || []).find(item => item.id === btn.dataset.id);
+            if (r) {
+                r.handled = !r.handled;
+                saveAppState();
+                renderRemindersView();
+            }
+        });
+    });
+
+    container.querySelectorAll('.btn-del-rem').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const rId = btn.dataset.id;
+            if (confirm("Delete this reminder?")) {
+                appState.reminders = (appState.reminders || []).filter(r => r.id !== rId);
+                saveAppState();
+                renderRemindersView();
+            }
+        });
+    });
+}
+
+function startRemindersInterval() {
+    // Check every 25 seconds for due reminders
+    setInterval(() => {
+        checkDueReminders();
+    }, 25000);
+}
+
+function checkDueReminders() {
+    const nowIso = new Date().toISOString();
+    const nowLocal = nowIso.slice(0, 16); // YYYY-MM-DDTHH:MM
+
+    const due = (appState.reminders || []).find(r => {
+        return r.enabled && !r.handled && r.dateTime && r.dateTime <= nowLocal;
+    });
+
+    if (due) {
+        showReminderAlert(due);
+    }
+}
+
+function showReminderAlert(reminder) {
+    const modal = document.getElementById('modal-reminder-alert');
+    const textEl = document.getElementById('reminder-alert-text');
+    const catEl = document.getElementById('reminder-alert-category');
+    const idIn = document.getElementById('reminder-alert-target-id');
+
+    if (!modal) return;
+
+    if (textEl) textEl.textContent = reminder.title;
+    if (catEl) catEl.textContent = (reminder.category || 'Study').toUpperCase();
+    if (idIn) idIn.value = reminder.id;
+
+    modal.classList.remove('hidden');
+
+    // Trigger browser notification if permitted
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        try {
+            new Notification(`Momentum AI: ${reminder.title}`, {
+                body: `Scheduled reminder for ${reminder.category || 'activity'}. Execution over intention.`
+            });
+        } catch (e) {
+            console.warn('[Notification] Could not display native notification:', e);
+        }
+    }
+}
+
+function initRemindersModule() {
+    const btnAdd = document.getElementById('btn-add-reminder');
+    const modalForm = document.getElementById('modal-reminder-form');
+    const form = document.getElementById('form-reminder');
+    const btnClose = document.getElementById('btn-reminder-close');
+    const btnCancel = document.getElementById('btn-reminder-cancel');
+    const btnPerm = document.getElementById('btn-request-notification-perm');
+
+    if (btnAdd && modalForm) {
+        btnAdd.addEventListener('click', () => {
+            const titleIn = document.getElementById('reminder-input-title');
+            const dtIn = document.getElementById('reminder-input-datetime');
+            const taskSel = document.getElementById('reminder-input-linked-task');
+
+            if (titleIn) titleIn.value = '';
+            if (dtIn) {
+                const now = new Date();
+                now.setMinutes(now.getMinutes() + 15);
+                dtIn.value = now.toISOString().slice(0, 16);
+            }
+            if (taskSel) {
+                taskSel.innerHTML = `<option value="">No linked task</option>` +
+                    (appState.tasks || []).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.title)} (${t.date})</option>`).join('');
+            }
+            modalForm.classList.remove('hidden');
+        });
+    }
+
+    if (btnClose && modalForm) btnClose.addEventListener('click', () => modalForm.classList.add('hidden'));
+    if (btnCancel && modalForm) btnCancel.addEventListener('click', () => modalForm.classList.add('hidden'));
+
+    if (form) {
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const titleIn = document.getElementById('reminder-input-title');
+            const catIn = document.getElementById('reminder-input-category');
+            const dtIn = document.getElementById('reminder-input-datetime');
+            const taskIn = document.getElementById('reminder-input-linked-task');
+
+            const title = titleIn ? titleIn.value.trim() : '';
+            const dt = dtIn ? dtIn.value : '';
+            const cat = catIn ? catIn.value : 'study';
+
+            if (!title || !dt) return;
+
+            // Duplicate protection: prevent duplicate title + category + datetime within 5m
+            const isDup = (appState.reminders || []).some(r => r.title === title && r.category === cat && r.dateTime === dt);
+            if (isDup) {
+                alert("An identical reminder is already scheduled for this time.");
+                return;
+            }
+
+            if (!Array.isArray(appState.reminders)) appState.reminders = [];
+            appState.reminders.push({
+                id: generateId(),
+                title,
+                category: cat,
+                dateTime: dt,
+                linkedTaskId: taskIn && taskIn.value ? taskIn.value : null,
+                linkedGoalId: null,
+                enabled: true,
+                handled: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+
+            saveAppState();
+            if (modalForm) modalForm.classList.add('hidden');
+            renderRemindersView();
+        });
+    }
+
+    if (btnPerm) {
+        btnPerm.addEventListener('click', () => {
+            if (typeof Notification !== 'undefined') {
+                Notification.requestPermission().then(perm => {
+                    renderRemindersView();
+                });
+            } else {
+                alert("Web Notifications API is not supported in this browser.");
+            }
+        });
+    }
+
+    // Reminder alert popup handlers
+    const modalAlert = document.getElementById('modal-reminder-alert');
+    const btnAlertDone = document.getElementById('btn-reminder-alert-done');
+    const btnAlertSnooze = document.getElementById('btn-reminder-alert-snooze');
+    const btnAlertClose = document.getElementById('btn-reminder-alert-close');
+    const targetIdIn = document.getElementById('reminder-alert-target-id');
+
+    if (btnAlertClose && modalAlert) btnAlertClose.addEventListener('click', () => modalAlert.classList.add('hidden'));
+
+    if (btnAlertDone) {
+        btnAlertDone.addEventListener('click', () => {
+            const id = targetIdIn ? targetIdIn.value : null;
+            const r = (appState.reminders || []).find(item => item.id === id);
+            if (r) {
+                r.handled = true;
+                saveAppState();
+                renderRemindersView();
+            }
+            if (modalAlert) modalAlert.classList.add('hidden');
+        });
+    }
+
+    if (btnAlertSnooze) {
+        btnAlertSnooze.addEventListener('click', () => {
+            const id = targetIdIn ? targetIdIn.value : null;
+            const r = (appState.reminders || []).find(item => item.id === id);
+            if (r) {
+                const now = new Date();
+                now.setMinutes(now.getMinutes() + 15);
+                r.dateTime = now.toISOString().slice(0, 16);
+                saveAppState();
+                renderRemindersView();
+            }
+            if (modalAlert) modalAlert.classList.add('hidden');
+        });
+    }
+
+    // Category filter tabs
+    document.querySelectorAll('#reminder-category-filters .tt-day-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#reminder-category-filters .tt-day-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            remindersState.activeCategory = btn.dataset.category;
+            renderRemindersView();
+        });
+    });
+
+    console.log('[Reminders] Phase 10 initialized.');
+}
+
+
+// ==========================================================================
+// PHASE 11 & 12 — ANALYTICS & PRODUCTIVITY SCORE
+// Weighted Formula: Tasks 35% + Study 35% + Habits 20% + Planning 10%
+// ==========================================================================
+
+const analyticsState = {
+    activeScope: '7days'
+};
+
+/**
+ * Filters items by the currently active date scope.
+ */
+function isDateInScope(dateStr, scope = analyticsState.activeScope) {
+    if (!dateStr) return false;
+    if (scope === 'all') return true;
+
+    const targetDate = new Date(dateStr + 'T12:00:00');
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+
+    if (scope === 'today') {
+        return dateStr === getTodayDateString();
+    }
+
+    const diffDays = Math.round((today - targetDate) / (1000 * 60 * 60 * 24));
+    if (scope === '7days') return diffDays >= 0 && diffDays <= 7;
+    if (scope === '30days') return diffDays >= 0 && diffDays <= 30;
+
+    return true;
+}
+
+/**
+ * Strict Phase 12 Productivity Score Formula:
+ * Score = taskCompletion * 0.35 + studyTargetCompletion * 0.35 + habitConsistency * 0.20 + planningConsistency * 0.10
+ * Does NOT fabricate when insufficient data.
+ */
+function calculateProductivityScore(scope = analyticsState.activeScope) {
+    const tasks = (appState.tasks || []).filter(t => isDateInScope(t.date, scope));
+    const studySessions = (appState.studySessions || []).filter(s => isDateInScope(s.date || s.createdAt.slice(0, 10), scope));
+    const habits = appState.habits || [];
+
+    // Check if there is enough activity data
+    if (tasks.length === 0 && studySessions.length === 0 && habits.length === 0) {
+        return {
+            hasData: false,
+            score: null,
+            taskComp: 0,
+            studyComp: 0,
+            habitComp: 0,
+            planComp: 0,
+            message: "Insufficient activity data to compute score for this period."
+        };
+    }
+
+    // 1. Task Completion (35%)
+    let taskPct = 0;
+    const completedTasks = tasks.filter(t => t.status === 'completed').length;
+    const closedTasks = tasks.filter(t => t.status === 'completed' || t.status === 'missed').length;
+    if (closedTasks > 0) {
+        taskPct = Math.round((completedTasks / closedTasks) * 100);
+    } else if (tasks.length > 0) {
+        taskPct = 50; // In-progress baseline
+    }
+
+    // 2. Study Target Completion (35%)
+    const targetDailyHours = (appState.academicProfile && appState.academicProfile.dailyStudyTargetHours) || 3.5;
+    const scopeDays = scope === 'today' ? 1 : scope === '7days' ? 7 : scope === '30days' ? 30 : Math.max(1, (tasks.length || 7));
+    const expectedStudyHours = targetDailyHours * scopeDays;
+    const loggedStudyMinutes = studySessions.reduce((acc, s) => acc + (Number(s.duration) || 0), 0);
+    const loggedStudyHours = loggedStudyMinutes / 60;
+    const studyPct = Math.min(100, Math.round((loggedStudyHours / (expectedStudyHours || 1)) * 100));
+
+    // 3. Habit Consistency (20%)
+    let habitPct = 0;
+    if (habits.length > 0) {
+        const totalStreak = habits.reduce((acc, h) => acc + computeHabitStreak(h), 0);
+        habitPct = Math.min(100, Math.round((totalStreak / (habits.length * 5)) * 100));
+    }
+
+    // 4. Planning Consistency (10%)
+    // Ratio of planned tasks completed on schedule without last-minute cancellation
+    const planPct = closedTasks > 0 ? taskPct : 70;
+
+    // Weighted Formula
+    const scoreVal = Math.round(
+        (taskPct * 0.35) +
+        (studyPct * 0.35) +
+        (habitPct * 0.20) +
+        (planPct * 0.10)
+    );
+
+    return {
+        hasData: true,
+        score: Math.min(100, Math.max(0, scoreVal)),
+        taskComp: Number((taskPct * 0.35).toFixed(1)),
+        studyComp: Number((studyPct * 0.35).toFixed(1)),
+        habitComp: Number((habitPct * 0.20).toFixed(1)),
+        planComp: Number((planPct * 0.10).toFixed(1)),
+        raw: { taskPct, studyPct, habitPct, planPct }
+    };
+}
+
+function renderAnalyticsView() {
+    const scope = analyticsState.activeScope;
+    const scoreData = calculateProductivityScore(scope);
+
+    // Productivity score display
+    const scoreValEl = document.getElementById('analytics-score-val');
+    const scorePeriodEl = document.getElementById('analytics-score-period-text');
+    const compTaskEl = document.getElementById('score-comp-task');
+    const compTaskSub = document.getElementById('score-comp-task-sub');
+    const compStudyEl = document.getElementById('score-comp-study');
+    const compStudySub = document.getElementById('score-comp-study-sub');
+    const compHabitEl = document.getElementById('score-comp-habit');
+    const compHabitSub = document.getElementById('score-comp-habit-sub');
+    const compPlanEl = document.getElementById('score-comp-plan');
+    const compPlanSub = document.getElementById('score-comp-plan-sub');
+
+    if (scorePeriodEl) {
+        scorePeriodEl.textContent = scope === 'today' ? 'Today' : scope === '7days' ? '7 Days Scope' : scope === '30days' ? '30 Days Scope' : 'All Time';
+    }
+
+    if (scoreData.hasData) {
+        if (scoreValEl) scoreValEl.textContent = scoreData.score;
+        if (compTaskEl) compTaskEl.textContent = `${scoreData.raw.taskPct}%`;
+        if (compTaskSub) compTaskSub.textContent = `${scoreData.taskComp} / 35 pts`;
+        if (compStudyEl) compStudyEl.textContent = `${scoreData.raw.studyPct}%`;
+        if (compStudySub) compStudySub.textContent = `${scoreData.studyComp} / 35 pts`;
+        if (compHabitEl) compHabitEl.textContent = `${scoreData.raw.habitPct}%`;
+        if (compHabitSub) compHabitSub.textContent = `${scoreData.habitComp} / 20 pts`;
+        if (compPlanEl) compPlanEl.textContent = `${scoreData.raw.planPct}%`;
+        if (compPlanSub) compPlanSub.textContent = `${scoreData.planComp} / 10 pts`;
+    } else {
+        if (scoreValEl) scoreValEl.textContent = '—';
+        if (compTaskEl) compTaskEl.textContent = '—';
+        if (compTaskSub) compTaskSub.textContent = '0 / 35 pts';
+        if (compStudyEl) compStudyEl.textContent = '—';
+        if (compStudySub) compStudySub.textContent = '0 / 35 pts';
+        if (compHabitEl) compHabitEl.textContent = '—';
+        if (compHabitSub) compHabitSub.textContent = '0 / 20 pts';
+        if (compPlanEl) compPlanEl.textContent = '—';
+        if (compPlanSub) compPlanSub.textContent = '0 / 10 pts';
+    }
+
+    // Key metrics summary
+    const tasks = (appState.tasks || []).filter(t => isDateInScope(t.date, scope));
+    const completedTasks = tasks.filter(t => t.status === 'completed');
+    const missedTasks = tasks.filter(t => t.status === 'missed');
+    const taskRateEl = document.getElementById('analytics-tasks-rate');
+    const taskDetailEl = document.getElementById('analytics-tasks-detail');
+
+    if (taskRateEl && taskDetailEl) {
+        if (tasks.length > 0) {
+            const rate = Math.round((completedTasks.length / tasks.length) * 100);
+            taskRateEl.textContent = `${rate}%`;
+            taskDetailEl.textContent = `${completedTasks.length} of ${tasks.length} tasks completed`;
+        } else {
+            taskRateEl.textContent = '—';
+            taskDetailEl.textContent = 'No tasks in this period';
+        }
+    }
+
+    const studySessions = (appState.studySessions || []).filter(s => isDateInScope(s.date || s.createdAt.slice(0, 10), scope));
+    const studyHoursEl = document.getElementById('analytics-study-hours');
+    const studyDetailEl = document.getElementById('analytics-study-detail');
+    if (studyHoursEl && studyDetailEl) {
+        const totalMins = studySessions.reduce((acc, s) => acc + (Number(s.duration) || 0), 0);
+        studyHoursEl.textContent = `${(totalMins / 60).toFixed(1)}h`;
+        studyDetailEl.textContent = `${studySessions.length} session(s) logged`;
+    }
+
+    const habits = appState.habits || [];
+    const habitRateEl = document.getElementById('analytics-habits-rate');
+    const habitDetailEl = document.getElementById('analytics-habits-detail');
+    if (habitRateEl && habitDetailEl) {
+        const totalCompletions = habits.reduce((acc, h) => {
+            const inScope = (h.completions || []).filter(d => isDateInScope(d, scope)).length;
+            return acc + inScope;
+        }, 0);
+        habitRateEl.textContent = totalCompletions;
+        habitDetailEl.textContent = `Total habit check-ins in period`;
+    }
+
+    const sleepLogs = (appState.sleepLogs || []).filter(s => isDateInScope(s.date, scope));
+    const sleepAvgEl = document.getElementById('analytics-sleep-avg');
+    const sleepDetailEl = document.getElementById('analytics-sleep-detail');
+    if (sleepAvgEl && sleepDetailEl) {
+        if (sleepLogs.length > 0) {
+            const avgDur = (sleepLogs.reduce((acc, s) => acc + (Number(s.duration) || 0), 0) / sleepLogs.length).toFixed(1);
+            sleepAvgEl.textContent = `${avgDur}h`;
+            sleepDetailEl.textContent = `${sleepLogs.length} night(s) logged`;
+        } else {
+            sleepAvgEl.textContent = '—';
+            sleepDetailEl.textContent = 'No sleep records in period';
+        }
+    }
+
+    // Missed reasons breakdown
+    const missedReasonsContainer = document.getElementById('analytics-missed-reasons-container');
+    if (missedReasonsContainer) {
+        const accRecords = (appState.accountabilityRecords || []).filter(r => isDateInScope(r.recordedAt.slice(0, 10), scope) && r.status === 'missed');
+        if (accRecords.length === 0) {
+            missedReasonsContainer.innerHTML = `<p class="text-small text-muted" style="padding:var(--space-4);">No missed task accountability records in this period.</p>`;
+        } else {
+            const counts = {};
+            accRecords.forEach(r => {
+                const re = r.reason || 'Other';
+                counts[re] = (counts[re] || 0) + 1;
+            });
+            missedReasonsContainer.innerHTML = `
+                <table class="data-table">
+                    <thead><tr><th>Reason</th><th>Count</th><th>Share</th></tr></thead>
+                    <tbody>
+                        ${Object.keys(counts).map(k => `
+                            <tr>
+                                <td><strong>${escapeHtml(k)}</strong></td>
+                                <td>${counts[k]}</td>
+                                <td>${Math.round((counts[k] / accRecords.length) * 100)}%</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+    }
+
+    // Wellness summary table
+    const wellnessSummaryContainer = document.getElementById('analytics-wellness-summary-container');
+    if (wellnessSummaryContainer) {
+        const waterLogs = (appState.waterLogs || []).filter(w => isDateInScope(w.date, scope));
+        const exLogs = (appState.exerciseLogs || []).filter(e => isDateInScope(e.date, scope));
+        const totalWater = waterLogs.reduce((a, b) => a + (Number(b.amountMl) || 0), 0);
+        const totalExMinutes = exLogs.reduce((a, b) => a + (Number(b.durationMinutes) || 0), 0);
+
+        wellnessSummaryContainer.innerHTML = `
+            <table class="data-table">
+                <tbody>
+                    <tr><td>Total Hydration Logged</td><td><strong>${totalWater} ml</strong></td></tr>
+                    <tr><td>Total Physical Exercise</td><td><strong>${totalExMinutes} mins</strong> (${exLogs.length} sessions)</td></tr>
+                    <tr><td>Active Habit Streaks</td><td><strong>${habits.filter(h => computeHabitStreak(h) > 0).length}</strong> / ${habits.length} habits</td></tr>
+                </tbody>
+            </table>
+        `;
+    }
+
+    // Draw Canvas Charts
+    const plannedHours = (tasks.reduce((a, t) => a + (t.estimatedDuration || 60), 0) / 60);
+    const executedHours = (completedTasks.reduce((a, t) => a + (t.estimatedDuration || 60), 0) / 60) + ((studySessions.reduce((a, s) => a + (Number(s.duration) || 0), 0)) / 60);
+    drawPlanVsActualChart(plannedHours, executedHours);
+
+    // Weekday completion
+    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const weekdayCounts = [0, 0, 0, 0, 0, 0, 0];
+    completedTasks.forEach(t => {
+        const dObj = new Date(t.date + 'T12:00:00');
+        weekdayCounts[dObj.getDay()]++;
+    });
+    drawWeekdayCompletionChart(weekdayCounts);
+}
+
+function drawPlanVsActualChart(plannedHours, executedHours) {
+    const canvas = document.getElementById('canvas-plan-vs-actual');
+    const summaryEl = document.getElementById('chart-plan-summary');
+    if (!canvas || !canvas.getContext) return;
+
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    if (summaryEl) {
+        summaryEl.textContent = `Planned: ${plannedHours.toFixed(1)}h | Verified Executed: ${executedHours.toFixed(1)}h`;
+    }
+
+    // Chart styling strictly matching design tokens
+    const maxVal = Math.max(1, Math.ceil(Math.max(plannedHours, executedHours) * 1.25));
+    const padding = 40;
+    const barW = 80;
+
+    // Draw Y-axis grid
+    ctx.strokeStyle = '#2a2c30';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding, h - padding);
+    ctx.lineTo(w - padding, h - padding);
+    ctx.stroke();
+
+    // Bars
+    const h1 = ((plannedHours / maxVal) * (h - padding * 2));
+    const h2 = ((executedHours / maxVal) * (h - padding * 2));
+
+    // Bar 1: Planned (Neutral Gray / Charcoal)
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(w / 2 - barW - 20, h - padding - h1, barW, h1);
+
+    // Bar 2: Executed (Muted Brand Teal #0f766e)
+    ctx.fillStyle = '#0f766e';
+    ctx.fillRect(w / 2 + 20, h - padding - h2, barW, h2);
+
+    // Labels
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px "IBM Plex Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Planned (${plannedHours.toFixed(1)}h)`, w / 2 - barW / 2 - 20, h - padding + 20);
+    ctx.fillText(`Executed (${executedHours.toFixed(1)}h)`, w / 2 + barW / 2 + 20, h - padding + 20);
+}
+
+function drawWeekdayCompletionChart(counts) {
+    const canvas = document.getElementById('canvas-weekday-completion');
+    if (!canvas || !canvas.getContext) return;
+
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const maxVal = Math.max(1, Math.ceil(Math.max(...counts) * 1.25));
+    const padding = 30;
+    const barW = (w - padding * 2) / 7 - 10;
+    const labels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    ctx.strokeStyle = '#2a2c30';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding, h - padding);
+    ctx.lineTo(w - padding, h - padding);
+    ctx.stroke();
+
+    counts.forEach((c, idx) => {
+        const barH = (c / maxVal) * (h - padding * 2);
+        const x = padding + idx * (barW + 10) + 5;
+        const y = h - padding - barH;
+
+        ctx.fillStyle = c > 0 ? '#0f766e' : '#334155';
+        ctx.fillRect(x, y, barW, barH);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px "IBM Plex Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(labels[idx], x + barW / 2, h - padding + 18);
+        if (c > 0) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(c, x + barW / 2, y - 6);
+        }
+    });
+}
+
+function initAnalyticsModule() {
+    const scopeBtns = document.querySelectorAll('.analytics-scope-btn');
+    scopeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            scopeBtns.forEach(b => {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-secondary');
+            });
+            btn.classList.remove('btn-secondary');
+            btn.classList.add('btn-primary');
+
+            analyticsState.activeScope = btn.dataset.scope;
+            renderAnalyticsView();
+        });
+    });
+
+    console.log('[Analytics] Phases 11 & 12 initialized.');
+}
+
+
+// ==========================================================================
+// PHASE 13 — SETTINGS MODULE
+// Profile • Goals • Academic • Theme • Safe Export/Import • Safe Reset
+// ==========================================================================
+
+function renderSettingsView() {
+    const nameIn = document.getElementById('settings-input-name');
+    const typeIn = document.getElementById('settings-input-usertype');
+    const wakeIn = document.getElementById('settings-input-waketime');
+    const sleepIn = document.getElementById('settings-input-sleeptime');
+    const focusIn = document.getElementById('settings-input-focus');
+
+    if (appState.profile) {
+        if (nameIn) nameIn.value = appState.profile.name || '';
+        if (typeIn) typeIn.value = appState.profile.userType || appState.profile.studentOrWorker || 'student';
+        if (wakeIn) wakeIn.value = appState.profile.wakeTime || '07:00';
+        if (sleepIn) sleepIn.value = appState.profile.sleepTime || '23:00';
+        if (focusIn) focusIn.value = appState.profile.peakFocusTime || 'Morning';
+    }
+
+    const examIn = document.getElementById('settings-input-target-exam');
+    const examDateIn = document.getElementById('settings-input-exam-date');
+    const targetIn = document.getElementById('settings-input-daily-study-target');
+    const sessLenIn = document.getElementById('settings-input-session-len');
+
+    if (appState.academicProfile) {
+        if (examIn) examIn.value = appState.academicProfile.targetExam || '';
+        if (examDateIn) examDateIn.value = appState.academicProfile.examDate || '';
+        if (targetIn) targetIn.value = appState.academicProfile.dailyStudyTargetHours || 3.5;
+        if (sessLenIn) sessLenIn.value = appState.academicProfile.preferredSessionDurationMinutes || 60;
+    }
+
+    const themeSel = document.getElementById('settings-select-theme');
+    const motionSel = document.getElementById('settings-toggle-reduced-motion');
+
+    if (appState.settings) {
+        if (themeSel) themeSel.value = appState.settings.theme || 'system';
+        if (motionSel) motionSel.value = String(appState.settings.reducedMotion === true);
+    }
+}
+
+function exportStateJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+    const downloadAnchor = document.createElement('a');
+    const fileName = `momentum_ai_backup_${getTodayDateString()}.json`;
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", fileName);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+}
+
+function importStateJSON(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const parsed = JSON.parse(e.target.result);
+            if (!parsed || typeof parsed !== 'object' || !parsed.schemaVersion) {
+                alert("Invalid state file format. Could not detect a valid Momentum AI schema.");
+                return;
+            }
+            if (confirm(`Import state from file (Schema version ${parsed.schemaVersion})? This will replace current local data.`)) {
+                const migrated = migrateAppState(parsed);
+                if (validateAppState(migrated.state)) {
+                    appState = migrated.state;
+                    saveAppState();
+                    applyTheme(appState.settings.theme);
+                    renderAllUI();
+                    alert("Data imported successfully!");
+                } else {
+                    alert("Imported state failed validation.");
+                }
+            }
+        } catch (err) {
+            alert(`Error reading backup JSON: ${err.message}`);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function resetOnboarding() {
+    if (confirm("Reset onboarding? This will allow you to run through the setup wizard again, but will PRESERVE all your existing tasks, timetable, study plans, habits, and history.")) {
+        if (appState.profile) {
+            appState.profile.onboardingCompleted = false;
+        }
+        saveAppState();
+        checkOnboardingState();
+    }
+}
+
+function initSettingsModule() {
+    const formProf = document.getElementById('form-settings-profile');
+    if (formProf) {
+        formProf.addEventListener('submit', e => {
+            e.preventDefault();
+            const nameIn = document.getElementById('settings-input-name');
+            const typeIn = document.getElementById('settings-input-usertype');
+            const wakeIn = document.getElementById('settings-input-waketime');
+            const sleepIn = document.getElementById('settings-input-sleeptime');
+            const focusIn = document.getElementById('settings-input-focus');
+
+            if (!appState.profile) appState.profile = createInitialState().profile;
+            if (nameIn) appState.profile.name = nameIn.value.trim();
+            if (typeIn) {
+                appState.profile.userType = typeIn.value;
+                appState.profile.studentOrWorker = typeIn.value;
+            }
+            if (wakeIn) appState.profile.wakeTime = wakeIn.value;
+            if (sleepIn) appState.profile.sleepTime = sleepIn.value;
+            if (focusIn) appState.profile.peakFocusTime = focusIn.value;
+
+            saveAppState();
+            renderActiveProfileSummary();
+            alert("Profile settings saved!");
+        });
+    }
+
+    const formAcad = document.getElementById('form-settings-academic');
+    if (formAcad) {
+        formAcad.addEventListener('submit', e => {
+            e.preventDefault();
+            const examIn = document.getElementById('settings-input-target-exam');
+            const examDateIn = document.getElementById('settings-input-exam-date');
+            const targetIn = document.getElementById('settings-input-daily-study-target');
+            const sessLenIn = document.getElementById('settings-input-session-len');
+
+            if (!appState.academicProfile) appState.academicProfile = createInitialState().academicProfile;
+            if (examIn) appState.academicProfile.targetExam = examIn.value.trim();
+            if (examDateIn) appState.academicProfile.examDate = examDateIn.value || null;
+            if (targetIn) appState.academicProfile.dailyStudyTargetHours = Number(targetIn.value) || 3.5;
+            if (sessLenIn) appState.academicProfile.preferredSessionDurationMinutes = Number(sessLenIn.value) || 60;
+
+            saveAppState();
+            alert("Academic parameters saved!");
+        });
+    }
+
+    const themeSel = document.getElementById('settings-select-theme');
+    if (themeSel) {
+        themeSel.addEventListener('change', () => {
+            if (!appState.settings) appState.settings = { theme: 'system' };
+            appState.settings.theme = themeSel.value;
+            applyTheme(themeSel.value);
+            saveAppState();
+        });
+    }
+
+    const motionSel = document.getElementById('settings-toggle-reduced-motion');
+    if (motionSel) {
+        motionSel.addEventListener('change', () => {
+            if (!appState.settings) appState.settings = { theme: 'system' };
+            appState.settings.reducedMotion = motionSel.value === 'true';
+            saveAppState();
+        });
+    }
+
+    const btnExport = document.getElementById('btn-settings-export-json');
+    if (btnExport) btnExport.addEventListener('click', exportStateJSON);
+
+    const inputImport = document.getElementById('input-settings-import-json');
+    if (inputImport) {
+        inputImport.addEventListener('change', e => {
+            const file = e.target.files && e.target.files[0];
+            if (file) importStateJSON(file);
+        });
+    }
+
+    const btnResetOnb = document.getElementById('btn-settings-reset-onboarding');
+    if (btnResetOnb) btnResetOnb.addEventListener('click', resetOnboarding);
+
+    // Clear all data with "DELETE" confirmation
+    const btnClearTrigger = document.getElementById('btn-settings-clear-data');
+    const modalClear = document.getElementById('modal-clear-data');
+    const btnClearClose = document.getElementById('btn-clear-data-close');
+    const btnClearCancel = document.getElementById('btn-clear-data-cancel');
+    const inputClearConfirm = document.getElementById('input-clear-confirm');
+    const btnClearConfirm = document.getElementById('btn-clear-data-confirm');
+
+    if (btnClearTrigger && modalClear) {
+        btnClearTrigger.addEventListener('click', () => {
+            if (inputClearConfirm) inputClearConfirm.value = '';
+            if (btnClearConfirm) btnClearConfirm.disabled = true;
+            modalClear.classList.remove('hidden');
+        });
+    }
+
+    if (inputClearConfirm && btnClearConfirm) {
+        inputClearConfirm.addEventListener('input', () => {
+            btnClearConfirm.disabled = (inputClearConfirm.value.trim() !== 'DELETE');
+        });
+    }
+
+    if (btnClearClose && modalClear) btnClearClose.addEventListener('click', () => modalClear.classList.add('hidden'));
+    if (btnClearCancel && modalClear) btnClearCancel.addEventListener('click', () => modalClear.classList.add('hidden'));
+
+    if (btnClearConfirm) {
+        btnClearConfirm.addEventListener('click', () => {
+            localStorage.removeItem(STORAGE_KEY);
+            appState = createInitialState();
+            saveAppState();
+            applyTheme(appState.settings.theme);
+            if (modalClear) modalClear.classList.add('hidden');
+            checkOnboardingState();
+            renderAllUI();
+            alert("All state data has been permanently cleared.");
+        });
+    }
+
+    console.log('[Settings] Phase 13 initialized.');
+}
+
+// --------------------------------------------------------------------------
+// PHASE 14 — UX POLISH & ACCESSIBILITY MODAL ESCAPE HANDLERS
+// --------------------------------------------------------------------------
+
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+
+    const modalIds = [
+        'modal-planner-session-edit',
+        'modal-subject-form',
+        'modal-chapter-form',
+        'modal-session-form',
+        'modal-test-form',
+        'modal-habit-form',
+        'modal-sleep-form',
+        'modal-exercise-form',
+        'modal-mood-form',
+        'modal-reminder-form',
+        'modal-reminder-alert',
+        'modal-clear-data'
+    ];
+
+    modalIds.forEach(id => {
+        const modal = document.getElementById(id);
+        if (modal && !modal.classList.contains('hidden')) {
+            modal.classList.add('hidden');
+        }
+    });
+});

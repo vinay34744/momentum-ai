@@ -453,14 +453,15 @@
                 <nav class="app-nav" aria-label="Main Navigation">
                     <ul class="nav-list">
                         <li><button class="nav-btn active" data-view="dashboard" aria-current="page">Dashboard</button></li>
-                        <li><button class="nav-btn" data-view="tasks" data-phase="3">Tasks <span class="nav-tag">Phase 3</span></button></li>
-                        <li><button class="nav-btn" data-view="foundation">System Foundation</button></li>
-                        <li><button class="nav-btn" data-view="today" data-phase="3">Today <span class="nav-tag">Phase 3</span></button></li>
-                        <li><button class="nav-btn" data-view="study" data-phase="6">Study <span class="nav-tag">Phase 6</span></button></li>
-                        <li><button class="nav-btn" data-view="wellness" data-phase="8">Wellness <span class="nav-tag">Phase 8</span></button></li>
-                        <li><button class="nav-btn" data-view="analytics" data-phase="11">Analytics <span class="nav-tag">Phase 11</span></button></li>
-                        <li><button class="nav-btn" data-view="aicoach" data-phase="9">AI Coach <span class="nav-tag">Phase 9</span></button></li>
-                        <li><button class="nav-btn" data-view="settings" data-phase="13">Settings <span class="nav-tag">Phase 13</span></button></li>
+                        <li><button class="nav-btn" data-view="tasks">Tasks</button></li>
+                        <li><button class="nav-btn" data-view="today">Today</button></li>
+                        <li><button class="nav-btn" data-view="study">Study</button></li>
+                        <li><button class="nav-btn" data-view="wellness">Wellness</button></li>
+                        <li><button class="nav-btn" data-view="aicoach">AI Coach</button></li>
+                        <li><button class="nav-btn" data-view="reminders">Reminders</button></li>
+                        <li><button class="nav-btn" data-view="analytics">Analytics</button></li>
+                        <li><button class="nav-btn" data-view="settings">Settings</button></li>
+                        <li><button class="nav-btn" data-view="foundation">Foundation</button></li>
                     </ul>
                 </nav>
 
@@ -824,9 +825,10 @@
                         <nav class="study-subnav" aria-label="Student Mode Sections">
                             <button class="study-nav-btn active" data-study-tab="timetable" aria-selected="true">Timetable</button>
                             <button class="study-nav-btn" data-study-tab="overview" aria-selected="false">Overview</button>
-                            <button class="study-nav-btn" data-study-tab="subjects" aria-selected="false">Subjects <span class="nav-tag">Phase 6+</span></button>
-                            <button class="study-nav-btn" data-study-tab="sessions" aria-selected="false">Study Sessions <span class="nav-tag">Phase 6+</span></button>
-                            <button class="study-nav-btn" data-study-tab="tests" aria-selected="false">Mock Tests <span class="nav-tag">Phase 6+</span></button>
+                            <button class="study-nav-btn" data-study-tab="planner" aria-selected="false">Study Planner</button>
+                            <button class="study-nav-btn" data-study-tab="subjects" aria-selected="false">Subjects &amp; Chapters</button>
+                            <button class="study-nav-btn" data-study-tab="sessions" aria-selected="false">Study Sessions</button>
+                            <button class="study-nav-btn" data-study-tab="tests" aria-selected="false">Mock Tests</button>
                         </nav>
 
                         <!-- ---- TAB: TIMETABLE ---- -->
@@ -926,30 +928,634 @@
                             </section>
                         </div>
 
-                        <!-- ---- TAB: SUBJECTS (placeholder) ---- -->
+                        <!-- ---- TAB: STUDY PLANNER (PHASE 7) ---- -->
+                        <div id="study-tab-planner" class="study-tab-panel hidden">
+                            <section class="card section-spacing">
+                                <div class="flex-header mb-md">
+                                    <div>
+                                        <h2 class="heading-subheading">Realistic Study Planner</h2>
+                                        <p class="text-secondary text-small">Calculates realistic study sessions fitted around classes and commitments.</p>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button id="btn-planner-generate" class="btn btn-primary">Generate Plan</button>
+                                        <button id="btn-planner-regenerate" class="btn btn-secondary">Regenerate Day</button>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-3 gap-md mb-md">
+                                    <div class="form-group">
+                                        <label for="planner-input-date" class="form-label">Planning Date</label>
+                                        <input type="date" id="planner-input-date" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="planner-input-target-hours" class="form-label">Daily Target (Hours)</label>
+                                        <input type="number" id="planner-input-target-hours" class="form-input" min="0.5" max="12" step="0.5" value="3.5">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="planner-input-session-len" class="form-label">Preferred Session (Mins)</label>
+                                        <select id="planner-input-session-len" class="form-input">
+                                            <option value="45">45 minutes</option>
+                                            <option value="60" selected>60 minutes</option>
+                                            <option value="90">90 minutes</option>
+                                            <option value="120">120 minutes</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="card-subtext mb-md" id="planner-constraints-summary">
+                                    <!-- Constraints & free window analysis populated here -->
+                                </div>
+                            </section>
+
+                            <!-- Planned Sessions List -->
+                            <section class="card section-spacing">
+                                <div class="flex-header mb-md">
+                                    <div>
+                                        <h3 class="heading-subheading" id="planner-schedule-heading">Planned Study Sessions</h3>
+                                        <p class="text-secondary text-small" id="planner-schedule-subheading">Every session is explainable and verified against schedule constraints.</p>
+                                    </div>
+                                    <button id="btn-planner-apply-tasks" class="btn btn-secondary">Apply to Tasks</button>
+                                </div>
+
+                                <div id="planner-sessions-container" class="planner-sessions-list">
+                                    <!-- Populated dynamically via script.js -->
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- ---- TAB: SUBJECTS & CHAPTERS ---- -->
                         <div id="study-tab-subjects" class="study-tab-panel hidden">
-                            <div class="empty-state">
-                                <div class="empty-title">Subjects</div>
-                                <p class="empty-description">Subject management will be available in a future update.</p>
-                            </div>
+                            <section class="card section-spacing">
+                                <div class="flex-header mb-md">
+                                    <div>
+                                        <h2 class="heading-subheading">Academic Subjects &amp; Chapters</h2>
+                                        <p class="text-secondary text-small">Manage your curriculum, syllabus progress, and chapter completion status.</p>
+                                    </div>
+                                    <button id="btn-add-subject" class="btn btn-primary">+ Add Subject</button>
+                                </div>
+
+                                <div id="subjects-container" class="grid grid-2 gap-md">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </section>
                         </div>
 
-                        <!-- ---- TAB: STUDY SESSIONS (placeholder) ---- -->
+                        <!-- ---- TAB: STUDY SESSIONS ---- -->
                         <div id="study-tab-sessions" class="study-tab-panel hidden">
-                            <div class="empty-state">
-                                <div class="empty-title">Study Sessions</div>
-                                <p class="empty-description">Session logging will be available in a future update.</p>
-                            </div>
+                            <section class="card section-spacing">
+                                <div class="flex-header mb-md">
+                                    <div>
+                                        <h2 class="heading-subheading">Logged Study Sessions</h2>
+                                        <p class="text-secondary text-small">Actual completed study time, questions practiced, and focus notes.</p>
+                                    </div>
+                                    <button id="btn-log-session" class="btn btn-primary">+ Log Study Session</button>
+                                </div>
+
+                                <div class="grid grid-4 gap-md mb-md">
+                                    <article class="card">
+                                        <div class="card-caption">Total Study Hours</div>
+                                        <div class="card-value" id="stat-study-total-hours">0.0h</div>
+                                        <div class="card-subtext">Completed sessions</div>
+                                    </article>
+                                    <article class="card">
+                                        <div class="card-caption">Total Sessions</div>
+                                        <div class="card-value" id="stat-study-total-sessions">0</div>
+                                        <div class="card-subtext">Logged to date</div>
+                                    </article>
+                                    <article class="card">
+                                        <div class="card-caption">Questions Practiced</div>
+                                        <div class="card-value" id="stat-study-questions">0</div>
+                                        <div class="card-subtext">Total solved</div>
+                                    </article>
+                                    <article class="card">
+                                        <div class="card-caption">Average Accuracy</div>
+                                        <div class="card-value" id="stat-study-accuracy">—</div>
+                                        <div class="card-subtext">Where recorded</div>
+                                    </article>
+                                </div>
+
+                                <div id="study-sessions-list-container" class="study-sessions-list">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </section>
                         </div>
 
-                        <!-- ---- TAB: MOCK TESTS (placeholder) ---- -->
+                        <!-- ---- TAB: MOCK TESTS ---- -->
                         <div id="study-tab-tests" class="study-tab-panel hidden">
-                            <div class="empty-state">
-                                <div class="empty-title">Mock Tests</div>
-                                <p class="empty-description">Mock test tracking will be available in a future update.</p>
+                            <section class="card section-spacing">
+                                <div class="flex-header mb-md">
+                                    <div>
+                                        <h2 class="heading-subheading">Mock Tests &amp; Practice Exams</h2>
+                                        <p class="text-secondary text-small">Track mock test scores, question counts, and diagnostic performance.</p>
+                                    </div>
+                                    <button id="btn-log-mock-test" class="btn btn-primary">+ Log Mock Test</button>
+                                </div>
+
+                                <div id="mock-tests-list-container" class="mock-tests-list">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </section>
+                        </div>
+
+                    </section>
+
+                    <!-- ====================================================================
+                         PHASE 8 — HEALTH & HABITS VIEW
+                         ==================================================================== -->
+                    <section id="view-wellness" class="view-panel hidden" aria-label="Health and Habits">
+                        <div class="panel-header section-spacing">
+                            <div>
+                                <h1 class="heading-display">Health &amp; Habits</h1>
+                                <p class="text-secondary body-text mt-xs">Track daily habits, sleep rhythm, hydration, physical activity, and focus state.</p>
                             </div>
                         </div>
 
+                        <!-- Medical Disclaimer -->
+                        <div class="alert alert-warning mb-md" role="note">
+                            <strong>Personal Wellness Tracking:</strong> Momentum AI is not a medical device, diagnosis tool, or clinical system. It does not provide health predictions or medical treatments.
+                        </div>
+
+                        <!-- Wellness Sub-Navigation -->
+                        <nav class="study-subnav" aria-label="Wellness Domains">
+                            <button class="wellness-nav-btn active" data-wellness-tab="habits" aria-selected="true">Habits</button>
+                            <button class="wellness-nav-btn" data-wellness-tab="sleep" aria-selected="false">Sleep</button>
+                            <button class="wellness-nav-btn" data-wellness-tab="water" aria-selected="false">Water</button>
+                            <button class="wellness-nav-btn" data-wellness-tab="exercise" aria-selected="false">Exercise</button>
+                            <button class="wellness-nav-btn" data-wellness-tab="mood" aria-selected="false">Mood &amp; Energy</button>
+                        </nav>
+
+                        <!-- Tab: Habits -->
+                        <div id="wellness-tab-habits" class="wellness-tab-panel">
+                            <section class="card section-spacing">
+                                <div class="flex-header mb-md">
+                                    <div>
+                                        <h2 class="heading-subheading">Daily Habits</h2>
+                                        <p class="text-secondary text-small">Build consistency through uninterrupted execution.</p>
+                                    </div>
+                                    <button id="btn-add-habit" class="btn btn-primary">+ Add Habit</button>
+                                </div>
+                                <div id="habits-list-container" class="habits-grid">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- Tab: Sleep -->
+                        <div id="wellness-tab-sleep" class="wellness-tab-panel hidden">
+                            <section class="card section-spacing">
+                                <div class="flex-header mb-md">
+                                    <div>
+                                        <h2 class="heading-subheading">Sleep Log</h2>
+                                        <p class="text-secondary text-small">Track bedtime, wake time, and sleep duration consistency.</p>
+                                    </div>
+                                    <button id="btn-log-sleep" class="btn btn-primary">+ Log Sleep</button>
+                                </div>
+                                <div class="grid grid-3 gap-md mb-md">
+                                    <article class="card">
+                                        <div class="card-caption">Average Sleep</div>
+                                        <div class="card-value" id="stat-sleep-avg">—</div>
+                                        <div class="card-subtext">Across logged nights</div>
+                                    </article>
+                                    <article class="card">
+                                        <div class="card-caption">Latest Bedtime</div>
+                                        <div class="card-value" id="stat-sleep-last-bed">—</div>
+                                        <div class="card-subtext">Last recorded night</div>
+                                    </article>
+                                    <article class="card">
+                                        <div class="card-caption">Latest Wake Time</div>
+                                        <div class="card-value" id="stat-sleep-last-wake">—</div>
+                                        <div class="card-subtext">Last recorded morning</div>
+                                    </article>
+                                </div>
+                                <div id="sleep-logs-container" class="table-container">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- Tab: Water -->
+                        <div id="wellness-tab-water" class="wellness-tab-panel hidden">
+                            <section class="card section-spacing">
+                                <div class="flex-header mb-md">
+                                    <div>
+                                        <h2 class="heading-subheading">Hydration Tracker</h2>
+                                        <p class="text-secondary text-small">Daily water consumption versus your defined target.</p>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button id="btn-water-add-250" class="btn btn-secondary">+250 ml</button>
+                                        <button id="btn-water-add-500" class="btn btn-primary">+500 ml</button>
+                                    </div>
+                                </div>
+                                <div class="card section-spacing">
+                                    <div class="flex-header mb-xs">
+                                        <span class="card-caption">Today&#8217;s Intake</span>
+                                        <span class="body-text text-secondary" id="water-progress-text">0 / 2500 ml</span>
+                                    </div>
+                                    <div class="progress-bar-track mb-md">
+                                        <div id="water-progress-fill" class="progress-bar-fill" style="width: 0%;"></div>
+                                    </div>
+                                    <div class="flex-header">
+                                        <div class="form-group" style="margin-bottom:0; max-width:200px;">
+                                            <label for="water-target-input" class="form-label text-small">Daily Target (ml)</label>
+                                            <input type="number" id="water-target-input" class="form-input" min="1000" max="6000" step="250" value="2500">
+                                        </div>
+                                        <button id="btn-water-reset-today" class="btn btn-secondary">Reset Today</button>
+                                    </div>
+                                </div>
+                                <div id="water-logs-history" class="table-container mt-md">
+                                    <!-- History -->
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- Tab: Exercise -->
+                        <div id="wellness-tab-exercise" class="wellness-tab-panel hidden">
+                            <section class="card section-spacing">
+                                <div class="flex-header mb-md">
+                                    <div>
+                                        <h2 class="heading-subheading">Exercise &amp; Activity</h2>
+                                        <p class="text-secondary text-small">Record physical sessions, durations, and intensity levels.</p>
+                                    </div>
+                                    <button id="btn-log-exercise" class="btn btn-primary">+ Log Activity</button>
+                                </div>
+                                <div id="exercise-logs-container" class="table-container">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- Tab: Mood & Energy -->
+                        <div id="wellness-tab-mood" class="wellness-tab-panel hidden">
+                            <section class="card section-spacing">
+                                <div class="flex-header mb-md">
+                                    <div>
+                                        <h2 class="heading-subheading">Mood &amp; Energy Check-in</h2>
+                                        <p class="text-secondary text-small">Daily mental focus and subjective energy tracking.</p>
+                                    </div>
+                                    <button id="btn-log-mood" class="btn btn-primary">+ Log Check-in</button>
+                                </div>
+                                <div id="mood-logs-container" class="table-container">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </section>
+                        </div>
+                    </section>
+
+                    <!-- ====================================================================
+                         PHASE 9 — RULE-BASED AI COACH VIEW
+                         ==================================================================== -->
+                    <section id="view-aicoach" class="view-panel hidden" aria-label="AI Coach">
+                        <div class="panel-header section-spacing">
+                            <div>
+                                <h1 class="heading-display">AI Coach V1</h1>
+                                <p class="text-secondary body-text mt-xs">Rule-based analytical observations derived strictly from your recorded actions.</p>
+                            </div>
+                            <button id="btn-refresh-aicoach" class="btn btn-secondary">Re-evaluate Patterns</button>
+                        </div>
+
+                        <!-- Data Sufficiency Banner -->
+                        <section class="card section-spacing" id="aicoach-status-card">
+                            <div class="flex-header">
+                                <div>
+                                    <span class="card-caption">Analysis Engine Status</span>
+                                    <h2 class="heading-subheading mt-xs" id="aicoach-data-sufficiency-title">Evaluating activity logs...</h2>
+                                    <p class="text-secondary text-small mt-xs" id="aicoach-data-sufficiency-desc">
+                                        Rule evaluations operate exclusively on verified local records with zero external API calls.
+                                    </p>
+                                </div>
+                                <span class="nav-tag" id="aicoach-rules-triggered-badge">0 rules active</span>
+                            </div>
+                        </section>
+
+                        <!-- Schedule Conflicts & Overload Alerts -->
+                        <section class="card section-spacing" id="aicoach-conflicts-section">
+                            <h2 class="heading-subheading mb-sm">Schedule Conflicts &amp; Overloads</h2>
+                            <div id="aicoach-conflicts-container">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </section>
+
+                        <!-- Factual Behavioral Patterns -->
+                        <section class="card section-spacing" id="aicoach-patterns-section">
+                            <h2 class="heading-subheading mb-sm">Observed Execution Patterns</h2>
+                            <p class="text-secondary text-small mb-md">Empirical patterns identified from completion history and missed task reasons.</p>
+                            <div id="aicoach-patterns-container" class="grid grid-2 gap-md">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </section>
+
+                        <!-- Practical Adjustments -->
+                        <section class="card section-spacing" id="aicoach-adjustments-section">
+                            <h2 class="heading-subheading mb-sm">Practical Adjustments</h2>
+                            <p class="text-secondary text-small mb-md">Actionable schedule and target refinements to restore execution consistency.</p>
+                            <div id="aicoach-adjustments-container">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </section>
+                    </section>
+
+                    <!-- ====================================================================
+                         PHASE 10 — REMINDERS VIEW
+                         ==================================================================== -->
+                    <section id="view-reminders" class="view-panel hidden" aria-label="Reminders">
+                        <div class="panel-header section-spacing">
+                            <div>
+                                <h1 class="heading-display">Reminders</h1>
+                                <p class="text-secondary body-text mt-xs">Local alert triggers connected to tasks, goals, and accountability.</p>
+                            </div>
+                            <button id="btn-add-reminder" class="btn btn-primary">+ Add Reminder</button>
+                        </div>
+
+                        <!-- Browser Permission Status Card -->
+                        <section class="card section-spacing" id="reminder-permission-card">
+                            <div class="flex-header">
+                                <div>
+                                    <h2 class="heading-subheading">Browser Notification Permission</h2>
+                                    <p class="text-secondary text-small" id="reminder-permission-status-text">
+                                        Browser notifications allow alerts when this tab is running.
+                                    </p>
+                                </div>
+                                <button id="btn-request-notification-perm" class="btn btn-secondary">Enable Notifications</button>
+                            </div>
+                        </section>
+
+                        <!-- Category Filter Bar -->
+                        <div class="tt-day-tabs mb-md" id="reminder-category-filters" role="tablist" aria-label="Reminder Categories">
+                            <button class="tt-day-btn active" data-category="all">All</button>
+                            <button class="tt-day-btn" data-category="study">Study</button>
+                            <button class="tt-day-btn" data-category="work">Work</button>
+                            <button class="tt-day-btn" data-category="water">Water</button>
+                            <button class="tt-day-btn" data-category="sleep">Sleep</button>
+                            <button class="tt-day-btn" data-category="exercise">Exercise</button>
+                            <button class="tt-day-btn" data-category="meals">Meals</button>
+                            <button class="tt-day-btn" data-category="personal">Personal</button>
+                            <button class="tt-day-btn" data-category="other">Other</button>
+                        </div>
+
+                        <!-- Scheduled Reminders List -->
+                        <section class="card section-spacing">
+                            <div class="flex-header mb-md">
+                                <h2 class="heading-subheading">Scheduled Reminders</h2>
+                                <span class="nav-tag" id="reminders-count-badge">0 active</span>
+                            </div>
+                            <div id="reminders-list-container" class="reminders-list">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </section>
+                    </section>
+
+                    <!-- ====================================================================
+                         PHASE 11 & 12 — ANALYTICS & PRODUCTIVITY SCORE VIEW
+                         ==================================================================== -->
+                    <section id="view-analytics" class="view-panel hidden" aria-label="Analytics and Productivity Score">
+                        <div class="panel-header section-spacing">
+                            <div>
+                                <h1 class="heading-display">Analytics &amp; Productivity Score</h1>
+                                <p class="text-secondary body-text mt-xs">Descriptive analysis and weighted execution scoring based on actual logs.</p>
+                            </div>
+                            <!-- Time Scope Switcher -->
+                            <div class="btn-group" role="group" aria-label="Analytics Time Scope">
+                                <button class="btn btn-secondary analytics-scope-btn" data-scope="today">Today</button>
+                                <button class="btn btn-primary analytics-scope-btn" data-scope="7days">7 Days</button>
+                                <button class="btn btn-secondary analytics-scope-btn" data-scope="30days">30 Days</button>
+                                <button class="btn btn-secondary analytics-scope-btn" data-scope="all">All Time</button>
+                            </div>
+                        </div>
+
+                        <!-- Phase 12 Productivity Score Card -->
+                        <section class="card section-spacing" id="analytics-score-card">
+                            <div class="flex-header mb-sm">
+                                <div>
+                                    <span class="card-caption">Momentum Productivity Score</span>
+                                    <div class="score-display-wrapper mt-xs">
+                                        <span class="score-large-number" id="analytics-score-val">—</span>
+                                        <span class="score-scale text-secondary">/ 100</span>
+                                    </div>
+                                </div>
+                                <div class="nav-tag" id="analytics-score-period-text">7 Days Scope</div>
+                            </div>
+                            <p class="text-secondary text-small mb-md" id="analytics-score-formula-explanation">
+                                Formula: Score = (Task Completion × 0.35) + (Study Target × 0.35) + (Habit Consistency × 0.20) + (Planning Consistency × 0.10).
+                            </p>
+                            <div class="grid grid-4 gap-md" id="score-components-grid">
+                                <article class="card">
+                                    <div class="card-caption">Tasks (35%)</div>
+                                    <div class="card-value" id="score-comp-task">—</div>
+                                    <div class="card-subtext" id="score-comp-task-sub">0.0 / 35 pts</div>
+                                </article>
+                                <article class="card">
+                                    <div class="card-caption">Study Target (35%)</div>
+                                    <div class="card-value" id="score-comp-study">—</div>
+                                    <div class="card-subtext" id="score-comp-study-sub">0.0 / 35 pts</div>
+                                </article>
+                                <article class="card">
+                                    <div class="card-caption">Habits (20%)</div>
+                                    <div class="card-value" id="score-comp-habit">—</div>
+                                    <div class="card-subtext" id="score-comp-habit-sub">0.0 / 20 pts</div>
+                                </article>
+                                <article class="card">
+                                    <div class="card-caption">Planning (10%)</div>
+                                    <div class="card-value" id="score-comp-plan">—</div>
+                                    <div class="card-subtext" id="score-comp-plan-sub">0.0 / 10 pts</div>
+                                </article>
+                            </div>
+                        </section>
+
+                        <!-- Key Metrics Summary Grid -->
+                        <section class="grid grid-4 gap-md section-spacing">
+                            <article class="card">
+                                <div class="card-caption">Tasks Completed</div>
+                                <div class="card-value" id="analytics-tasks-rate">—</div>
+                                <div class="card-subtext" id="analytics-tasks-detail">0 of 0 planned</div>
+                            </article>
+                            <article class="card">
+                                <div class="card-caption">Study Time Logged</div>
+                                <div class="card-value" id="analytics-study-hours">—</div>
+                                <div class="card-subtext" id="analytics-study-detail">0 sessions</div>
+                            </article>
+                            <article class="card">
+                                <div class="card-caption">Habit Consistency</div>
+                                <div class="card-value" id="analytics-habits-rate">—</div>
+                                <div class="card-subtext" id="analytics-habits-detail">0 completions</div>
+                            </article>
+                            <article class="card">
+                                <div class="card-caption">Average Sleep</div>
+                                <div class="card-value" id="analytics-sleep-avg">—</div>
+                                <div class="card-subtext" id="analytics-sleep-detail">0 logged nights</div>
+                            </article>
+                        </section>
+
+                        <!-- Charts & Breakdown Section -->
+                        <div class="grid grid-2 gap-lg section-spacing">
+                            <!-- Planning vs Execution Card -->
+                            <article class="card">
+                                <h2 class="heading-subheading mb-sm">Planned vs. Executed Hours</h2>
+                                <p class="text-secondary text-small mb-md">Comparison of scheduled commitment versus verified completion.</p>
+                                <div class="chart-wrapper" id="chart-plan-vs-actual-container">
+                                    <canvas id="canvas-plan-vs-actual" width="400" height="200" aria-label="Planned versus executed chart"></canvas>
+                                </div>
+                                <div class="card-subtext mt-sm" id="chart-plan-summary"></div>
+                            </article>
+
+                            <!-- Missed Reasons Breakdown Card -->
+                            <article class="card">
+                                <h2 class="heading-subheading mb-sm">Missed Tasks by Reason</h2>
+                                <p class="text-secondary text-small mb-md">Accountability breakdown of why tasks were not completed.</p>
+                                <div id="analytics-missed-reasons-container" class="table-container">
+                                    <!-- Table of reasons populated dynamically -->
+                                </div>
+                            </article>
+                        </div>
+
+                        <!-- Day-of-Week Pattern & Wellness Correlation -->
+                        <div class="grid grid-2 gap-lg section-spacing">
+                            <article class="card">
+                                <h2 class="heading-subheading mb-sm">Execution by Day of Week</h2>
+                                <div class="chart-wrapper" id="chart-weekday-container">
+                                    <canvas id="canvas-weekday-completion" width="400" height="180" aria-label="Weekday completion chart"></canvas>
+                                </div>
+                            </article>
+
+                            <article class="card">
+                                <h2 class="heading-subheading mb-sm">Hydration &amp; Exercise Summary</h2>
+                                <div class="table-container" id="analytics-wellness-summary-container">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+
+                    <!-- ====================================================================
+                         PHASE 13 — SETTINGS VIEW
+                         ==================================================================== -->
+                    <section id="view-settings" class="view-panel hidden" aria-label="Settings">
+                        <div class="panel-header section-spacing">
+                            <div>
+                                <h1 class="heading-display">Settings</h1>
+                                <p class="text-secondary body-text mt-xs">Manage profile, routine, academic parameters, appearance, and local storage data.</p>
+                            </div>
+                        </div>
+
+                        <!-- Profile Section -->
+                        <section class="card section-spacing">
+                            <h2 class="heading-subheading mb-sm">Profile &amp; Routine</h2>
+                            <form id="form-settings-profile" novalidate>
+                                <div class="grid grid-2 gap-md mb-md">
+                                    <div class="form-group">
+                                        <label for="settings-input-name" class="form-label">Full Name</label>
+                                        <input type="text" id="settings-input-name" class="form-input" maxlength="60">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="settings-input-usertype" class="form-label">Primary Role</label>
+                                        <select id="settings-input-usertype" class="form-input">
+                                            <option value="student">Student</option>
+                                            <option value="worker">Working Professional</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-3 gap-md mb-md">
+                                    <div class="form-group">
+                                        <label for="settings-input-waketime" class="form-label">Wake Time</label>
+                                        <input type="time" id="settings-input-waketime" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="settings-input-sleeptime" class="form-label">Sleep Time</label>
+                                        <input type="time" id="settings-input-sleeptime" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="settings-input-focus" class="form-label">Peak Focus Period</label>
+                                        <select id="settings-input-focus" class="form-input">
+                                            <option value="Morning">Morning</option>
+                                            <option value="Afternoon">Afternoon</option>
+                                            <option value="Evening">Evening</option>
+                                            <option value="Night">Night</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Profile Settings</button>
+                            </form>
+                        </section>
+
+                        <!-- Academic Profile Section -->
+                        <section class="card section-spacing">
+                            <h2 class="heading-subheading mb-sm">Academic Parameters</h2>
+                            <form id="form-settings-academic" novalidate>
+                                <div class="grid grid-2 gap-md mb-md">
+                                    <div class="form-group">
+                                        <label for="settings-input-target-exam" class="form-label">Target Exam / Goal</label>
+                                        <input type="text" id="settings-input-target-exam" class="form-input" placeholder="e.g. B.Tech Semester 1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="settings-input-exam-date" class="form-label">Target Exam Date</label>
+                                        <input type="date" id="settings-input-exam-date" class="form-input">
+                                    </div>
+                                </div>
+                                <div class="grid grid-2 gap-md mb-md">
+                                    <div class="form-group">
+                                        <label for="settings-input-daily-study-target" class="form-label">Daily Study Target (Hours)</label>
+                                        <input type="number" id="settings-input-daily-study-target" class="form-input" min="0.5" max="14" step="0.5" value="3.5">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="settings-input-session-len" class="form-label">Default Session Length (Mins)</label>
+                                        <select id="settings-input-session-len" class="form-input">
+                                            <option value="45">45 minutes</option>
+                                            <option value="60">60 minutes</option>
+                                            <option value="90">90 minutes</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Academic Settings</button>
+                            </form>
+                        </section>
+
+                        <!-- Appearance Section -->
+                        <section class="card section-spacing">
+                            <h2 class="heading-subheading mb-sm">Appearance &amp; Accessibility</h2>
+                            <div class="grid grid-2 gap-md mb-md">
+                                <div class="form-group">
+                                    <label for="settings-select-theme" class="form-label">Theme</label>
+                                    <select id="settings-select-theme" class="form-input">
+                                        <option value="system">System Default</option>
+                                        <option value="dark">Dark Theme</option>
+                                        <option value="light">Light Theme</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="settings-toggle-reduced-motion" class="form-label">Reduced Motion</label>
+                                    <select id="settings-toggle-reduced-motion" class="form-input">
+                                        <option value="false">Standard Transitions</option>
+                                        <option value="true">Reduced Motion (Accessible)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Data Management Section -->
+                        <section class="card section-spacing">
+                            <h2 class="heading-subheading mb-sm">Data Management &amp; Persistence</h2>
+                            <p class="text-secondary text-small mb-md">
+                                All Momentum AI data resides exclusively on this device in LocalStorage.
+                            </p>
+                            <div class="btn-group mb-md">
+                                <button id="btn-settings-export-json" class="btn btn-secondary">Export State JSON</button>
+                                <label class="btn btn-secondary" for="input-settings-import-json" style="cursor: pointer;">Import State JSON</label>
+                                <input type="file" id="input-settings-import-json" accept=".json" class="hidden">
+                                <button id="btn-settings-reset-onboarding" class="btn btn-secondary">Reset Onboarding</button>
+                                <button id="btn-settings-clear-data" class="btn btn-danger">Clear All Data</button>
+                            </div>
+                        </section>
+
+                        <!-- Privacy & Legal Section -->
+                        <section class="card section-spacing">
+                            <h2 class="heading-subheading mb-sm">Privacy &amp; Terms</h2>
+                            <p class="text-secondary text-small mb-md">
+                                Momentum AI does not send your data to external cloud servers, AI LLM endpoints, or advertising networks.
+                            </p>
+                            <div class="flex-header">
+                                <a href="privacy.html" class="btn btn-secondary">Read Privacy Policy</a>
+                                <a href="terms.html" class="btn btn-secondary">Read Terms of Service</a>
+                            </div>
+                        </section>
                     </section>
 
                 </main>
@@ -1073,7 +1679,7 @@
             <div class="footer-left">
                 <span>&copy; Momentum AI — Execution Over Intention</span>
                 <span class="footer-separator">|</span>
-                <span>Version 1.1.0 (Phase 6)</span>
+                <span>Version 1.2.0 (V1)</span>
             </div>
             <div class="footer-links">
                 <a href="privacy.html" class="footer-link">Privacy Policy</a>
@@ -1198,6 +1804,449 @@
                 <div class="modal-footer">
                     <button type="button" id="btn-tt-delete-cancel" class="btn btn-secondary">Cancel</button>
                     <button type="button" id="btn-tt-delete-confirm" class="btn btn-danger">Delete entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         PHASE 7 STUDY PLANNER MODAL
+         ==================================================================== -->
+    <div id="modal-planner-session-edit" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-planner-edit-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-planner-edit-title">Edit Planned Session</h3>
+                <button type="button" id="btn-planner-edit-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-planner-session-edit" class="modal-body" novalidate>
+                <input type="hidden" id="planner-edit-input-id" value="">
+                <div class="form-group mb-md">
+                    <label for="planner-edit-input-subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                    <select id="planner-edit-input-subject" class="form-input" required></select>
+                </div>
+                <div class="form-group mb-md">
+                    <label for="planner-edit-input-chapter" class="form-label">Chapter</label>
+                    <select id="planner-edit-input-chapter" class="form-input"></select>
+                </div>
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="planner-edit-input-start" class="form-label">Start Time <span class="text-danger">*</span></label>
+                        <input type="time" id="planner-edit-input-start" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="planner-edit-input-end" class="form-label">End Time <span class="text-danger">*</span></label>
+                        <input type="time" id="planner-edit-input-end" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group mb-md">
+                    <label for="planner-edit-input-reason" class="form-label">Scheduling Reason</label>
+                    <textarea id="planner-edit-input-reason" class="form-input" rows="2"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-planner-edit-delete" class="btn btn-danger">Delete Session</button>
+                    <button type="button" id="btn-planner-edit-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Session</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         PHASE 6 & 7 SUBJECTS & CHAPTERS MODALS
+         ==================================================================== -->
+    <div id="modal-subject-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-subject-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-subject-title">Add Subject</h3>
+                <button type="button" id="btn-subject-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-subject" class="modal-body" novalidate>
+                <input type="hidden" id="subject-input-id" value="">
+                <div class="form-group mb-md">
+                    <label for="subject-input-name" class="form-label">Subject Name <span class="text-danger">*</span></label>
+                    <input type="text" id="subject-input-name" class="form-input" placeholder="e.g. Maths 1 - B" required>
+                    <div class="form-error hidden" id="error-subject-name">Subject name is required.</div>
+                </div>
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="subject-input-category" class="form-label">Category</label>
+                        <select id="subject-input-category" class="form-input">
+                            <option value="Engineering">Engineering</option>
+                            <option value="Science">Science</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Humanities">Humanities</option>
+                            <option value="General">General</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject-input-weak" class="form-label">Needs Extra Focus?</label>
+                        <select id="subject-input-weak" class="form-input">
+                            <option value="false">Standard Priority</option>
+                            <option value="true">Weak Subject (High Priority)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-subject-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Subject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Chapter Form -->
+    <div id="modal-chapter-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-chapter-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-chapter-title">Add Chapter</h3>
+                <button type="button" id="btn-chapter-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-chapter" class="modal-body" novalidate>
+                <input type="hidden" id="chapter-input-id" value="">
+                <input type="hidden" id="chapter-input-subject-id" value="">
+                <div class="form-group mb-md">
+                    <label for="chapter-input-name" class="form-label">Chapter / Topic Title <span class="text-danger">*</span></label>
+                    <input type="text" id="chapter-input-name" class="form-input" placeholder="e.g. Differential Calculus" required>
+                </div>
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="chapter-input-status" class="form-label">Status</label>
+                        <select id="chapter-input-status" class="form-input">
+                            <option value="not_started">Not Started</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="chapter-input-revisions" class="form-label">Revision Count</label>
+                        <input type="number" id="chapter-input-revisions" class="form-input" min="0" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-chapter-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Chapter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Study Session Log -->
+    <div id="modal-session-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-session-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-session-title">Log Study Session</h3>
+                <button type="button" id="btn-session-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-study-session" class="modal-body" novalidate>
+                <input type="hidden" id="session-input-id" value="">
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="session-input-subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                        <select id="session-input-subject" class="form-input" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="session-input-chapter" class="form-label">Chapter</label>
+                        <select id="session-input-chapter" class="form-input"></select>
+                    </div>
+                </div>
+                <div class="grid grid-3 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="session-input-date" class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" id="session-input-date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="session-input-duration" class="form-label">Duration (Mins) <span class="text-danger">*</span></label>
+                        <input type="number" id="session-input-duration" class="form-input" min="5" max="600" value="60" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="session-input-questions" class="form-label">Questions Solved</label>
+                        <input type="number" id="session-input-questions" class="form-input" min="0" value="0">
+                    </div>
+                </div>
+                <div class="form-group mb-md">
+                    <label for="session-input-notes" class="form-label">Notes &amp; Focus Keynotes</label>
+                    <textarea id="session-input-notes" class="form-input" rows="2" placeholder="Key concepts covered, mistakes made..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-session-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Session</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Mock Test Log -->
+    <div id="modal-test-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-test-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-test-title">Log Mock Test</h3>
+                <button type="button" id="btn-test-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-mock-test" class="modal-body" novalidate>
+                <div class="form-group mb-md">
+                    <label for="test-input-title" class="form-label">Test Title <span class="text-danger">*</span></label>
+                    <input type="text" id="test-input-title" class="form-input" placeholder="e.g. Friday Contest / Calculus Quiz 1" required>
+                </div>
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="test-input-subject" class="form-label">Subject</label>
+                        <select id="test-input-subject" class="form-input"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="test-input-date" class="form-label">Date</label>
+                        <input type="date" id="test-input-date" class="form-input">
+                    </div>
+                </div>
+                <div class="grid grid-3 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="test-input-total" class="form-label">Total Questions</label>
+                        <input type="number" id="test-input-total" class="form-input" min="1" value="30">
+                    </div>
+                    <div class="form-group">
+                        <label for="test-input-correct" class="form-label">Correct Answers</label>
+                        <input type="number" id="test-input-correct" class="form-input" min="0" value="24">
+                    </div>
+                    <div class="form-group">
+                        <label for="test-input-duration" class="form-label">Duration (Mins)</label>
+                        <input type="number" id="test-input-duration" class="form-input" min="1" value="60">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-test-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Mock Test</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         PHASE 8 HEALTH & HABITS MODALS
+         ==================================================================== -->
+    <div id="modal-habit-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-habit-title">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-habit-title">Add Habit</h3>
+                <button type="button" id="btn-habit-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-habit" class="modal-body" novalidate>
+                <input type="hidden" id="habit-input-id" value="">
+                <div class="form-group mb-md">
+                    <label for="habit-input-title" class="form-label">Habit Title <span class="text-danger">*</span></label>
+                    <input type="text" id="habit-input-title" class="form-input" placeholder="e.g. Read 20 mins, Morning stretch" required>
+                </div>
+                <div class="form-group mb-md">
+                    <label for="habit-input-target" class="form-label">Target Days per Week</label>
+                    <select id="habit-input-target" class="form-input">
+                        <option value="7">Every day (7 days)</option>
+                        <option value="6">6 days / week</option>
+                        <option value="5" selected>5 days / week (Weekdays)</option>
+                        <option value="3">3 days / week</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-habit-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Habit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Sleep Log Form -->
+    <div id="modal-sleep-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-sleep-title">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-sleep-title">Log Sleep</h3>
+                <button type="button" id="btn-sleep-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-sleep" class="modal-body" novalidate>
+                <div class="form-group mb-md">
+                    <label for="sleep-input-date" class="form-label">Date (Morning of)</label>
+                    <input type="date" id="sleep-input-date" class="form-input" required>
+                </div>
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="sleep-input-bed" class="form-label">Bedtime</label>
+                        <input type="time" id="sleep-input-bed" class="form-input" value="23:30" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sleep-input-wake" class="form-label">Wake Time</label>
+                        <input type="time" id="sleep-input-wake" class="form-input" value="07:15" required>
+                    </div>
+                </div>
+                <div class="form-group mb-md">
+                    <label for="sleep-input-notes" class="form-label">Notes <span class="text-muted">(Optional)</span></label>
+                    <input type="text" id="sleep-input-notes" class="form-input" placeholder="e.g. Woke up refreshed, slight interruption">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-sleep-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Sleep Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Exercise Log Form -->
+    <div id="modal-exercise-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-exercise-title">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-exercise-title">Log Exercise</h3>
+                <button type="button" id="btn-exercise-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-exercise" class="modal-body" novalidate>
+                <div class="form-group mb-md">
+                    <label for="exercise-input-activity" class="form-label">Activity Type <span class="text-danger">*</span></label>
+                    <input type="text" id="exercise-input-activity" class="form-input" placeholder="e.g. Jogging, Strength training, Yoga" required>
+                </div>
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="exercise-input-duration" class="form-label">Duration (Mins) <span class="text-danger">*</span></label>
+                        <input type="number" id="exercise-input-duration" class="form-input" min="5" max="360" value="30" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="exercise-input-intensity" class="form-label">Intensity</label>
+                        <select id="exercise-input-intensity" class="form-input">
+                            <option value="light">Light</option>
+                            <option value="moderate" selected>Moderate</option>
+                            <option value="vigorous">Vigorous</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-exercise-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Exercise</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Mood Check-in Form -->
+    <div id="modal-mood-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-mood-title">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-mood-title">Mood &amp; Energy Check-in</h3>
+                <button type="button" id="btn-mood-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-mood" class="modal-body" novalidate>
+                <div class="form-group mb-md">
+                    <label for="mood-input-label" class="form-label">Focus &amp; Mental State</label>
+                    <select id="mood-input-label" class="form-input">
+                        <option value="Calm">Calm &amp; Clear</option>
+                        <option value="Focused" selected>High Focus</option>
+                        <option value="Neutral">Neutral / Steady</option>
+                        <option value="Tired">Tired / Low Energy</option>
+                        <option value="Stressed">Stressed / Overwhelmed</option>
+                    </select>
+                </div>
+                <div class="form-group mb-md">
+                    <label for="mood-input-energy" class="form-label">Energy Level (1 to 5)</label>
+                    <select id="mood-input-energy" class="form-input">
+                        <option value="1">1 - Very Low</option>
+                        <option value="2">2 - Low</option>
+                        <option value="3" selected>3 - Moderate</option>
+                        <option value="4">4 - High</option>
+                        <option value="5">5 - Peak Energy</option>
+                    </select>
+                </div>
+                <div class="form-group mb-md">
+                    <label for="mood-input-notes" class="form-label">Observation Notes <span class="text-muted">(Optional)</span></label>
+                    <input type="text" id="mood-input-notes" class="form-input" placeholder="e.g. Good morning flow, afternoon dip">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-mood-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Check-in</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         PHASE 10 REMINDERS MODAL
+         ==================================================================== -->
+    <div id="modal-reminder-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-reminder-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="modal-reminder-title">Add Reminder</h3>
+                <button type="button" id="btn-reminder-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-reminder" class="modal-body" novalidate>
+                <input type="hidden" id="reminder-input-id" value="">
+                <div class="form-group mb-md">
+                    <label for="reminder-input-title" class="form-label">Reminder Title <span class="text-danger">*</span></label>
+                    <input type="text" id="reminder-input-title" class="form-input" placeholder="e.g. Review Calculus notes, Hydrate" required>
+                    <div class="form-error hidden" id="error-reminder-title">Title is required.</div>
+                </div>
+                <div class="grid grid-2 gap-md mb-md">
+                    <div class="form-group">
+                        <label for="reminder-input-category" class="form-label">Category</label>
+                        <select id="reminder-input-category" class="form-input">
+                            <option value="study" selected>Study</option>
+                            <option value="work">Work</option>
+                            <option value="water">Water</option>
+                            <option value="sleep">Sleep</option>
+                            <option value="exercise">Exercise</option>
+                            <option value="meals">Meals</option>
+                            <option value="personal">Personal</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reminder-input-datetime" class="form-label">Date &amp; Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" id="reminder-input-datetime" class="form-input" required>
+                        <div class="form-error hidden" id="error-reminder-datetime">Valid date and time are required.</div>
+                    </div>
+                </div>
+                <div class="form-group mb-md">
+                    <label for="reminder-input-linked-task" class="form-label">Link to Task <span class="text-muted">(Optional)</span></label>
+                    <select id="reminder-input-linked-task" class="form-input">
+                        <option value="">No linked task</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-reminder-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Reminder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Reminder Alert Popup (Fires when reminder due) -->
+    <div id="modal-reminder-alert" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="reminder-alert-title">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h3 class="heading-heading" id="reminder-alert-title">Reminder Alert</h3>
+                <button type="button" id="btn-reminder-alert-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="card-caption" id="reminder-alert-category">Study</div>
+                <h4 class="heading-subheading mt-xs mb-sm" id="reminder-alert-text">Time for planned study</h4>
+                <p class="text-secondary text-small mb-md" id="reminder-alert-detail">Take action now to maintain your daily execution momentum.</p>
+                <input type="hidden" id="reminder-alert-target-id" value="">
+                <div class="modal-footer">
+                    <button type="button" id="btn-reminder-alert-snooze" class="btn btn-secondary">Snooze 15m</button>
+                    <button type="button" id="btn-reminder-alert-done" class="btn btn-primary">Mark Handled</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirm Clear Data -->
+    <div id="modal-clear-data" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-clear-data-title">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h3 class="heading-heading text-danger" id="modal-clear-data-title">Permanently Clear State?</h3>
+                <button type="button" id="btn-clear-data-close" class="btn-close" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="body-text text-secondary mb-md">
+                    This action will permanently wipe all local Momentum AI records (tasks, goals, timetable, study plans, habits, and logs) from this browser.
+                </p>
+                <div class="form-group mb-md">
+                    <label for="input-clear-confirm" class="form-label text-small">Type <strong>DELETE</strong> to confirm:</label>
+                    <input type="text" id="input-clear-confirm" class="form-input" placeholder="DELETE">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-clear-data-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="button" id="btn-clear-data-confirm" class="btn btn-danger" disabled>Clear All Data</button>
                 </div>
             </div>
         </div>

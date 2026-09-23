@@ -1,1 +1,7 @@
 .DS_Store
+*.log
+node_modules/
+.idea/
+.vscode/
+.env*
+.system_generated/

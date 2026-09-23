@@ -2228,3 +2228,235 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* ==========================================================================
+   PHASE 7–14 COMPONENT STYLES
+   Calm, Analytical, Practical, Restrained
+   ========================================================================== */
+
+/* Planner Styles */
+.planner-sessions-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.planner-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    transition: border-color var(--transition-fast);
+}
+
+.planner-card:hover {
+    border-color: var(--color-border-strong);
+}
+
+.planner-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.planner-reason-box {
+    background-color: var(--color-surface-elevated);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-normal);
+}
+
+/* Chapter & Subject Badges */
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+}
+
+.badge-not-started {
+    background-color: var(--color-surface-elevated);
+    color: var(--color-text-secondary);
+}
+
+.badge-in-progress {
+    background-color: var(--color-brand-subtle);
+    color: var(--color-brand);
+    border: 1px solid var(--color-brand-light);
+}
+
+.badge-completed {
+    background-color: var(--color-success-bg);
+    color: var(--color-success);
+    border: 1px solid var(--color-success-border);
+}
+
+.badge-weak {
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning);
+    border: 1px solid var(--color-warning-border);
+}
+
+/* Habits Grid */
+.habits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-3);
+}
+
+.habit-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.habit-card.completed {
+    border-color: var(--color-brand);
+    background-color: var(--color-brand-subtle);
+}
+
+.habit-check-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--color-border-strong);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: transparent;
+    transition: all var(--transition-fast);
+}
+
+.habit-check-btn.checked {
+    background: var(--color-brand);
+    border-color: var(--color-brand);
+    color: var(--color-text-on-brand);
+}
+
+.habit-streak {
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-brand);
+}
+
+/* Progress Bars */
+.progress-bar-track {
+    width: 100%;
+    height: 10px;
+    background-color: var(--color-surface-elevated);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: var(--color-brand);
+    transition: width var(--transition-normal);
+}
+
+/* Productivity Score Display */
+.score-display-wrapper {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+}
+
+.score-large-number {
+    font-size: 2.75rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-brand);
+    line-height: 1;
+}
+
+.score-scale {
+    font-size: 1.125rem;
+    color: var(--color-text-secondary);
+}
+
+/* Charts */
+.chart-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-2) 0;
+}
+
+.chart-wrapper canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Reminders List */
+.reminders-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.reminder-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.reminder-card.handled {
+    opacity: 0.6;
+    text-decoration: line-through;
+}
+
+.reminder-category-pill {
+    font-size: var(--font-size-caption);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface-elevated);
+    color: var(--color-text-secondary);
+}
+
+/* Accessibility Focus States */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
