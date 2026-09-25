@@ -171,9 +171,12 @@
     }
 }
 
-/* --------------------------------------------------------------------------
-   2. BASE & RESET STYLES
-   -------------------------------------------------------------------------- */
+/* Shared container token — all major layout containers use this so
+   the logo, hero content, and footer share a single left edge */
+:root {
+    --layout-max-width: 1200px;
+    --layout-gutter: var(--space-8); /* 32px — consistent horizontal padding */
+}
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -270,14 +273,14 @@ body {
 .app-header {
     background-color: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
-    padding: var(--space-3) var(--space-6);
+    padding: var(--space-3) var(--layout-gutter);
     position: sticky;
     top: 0;
     z-index: 50;
 }
 
 .header-container {
-    max-width: 1400px;
+    max-width: var(--layout-max-width);
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -301,8 +304,8 @@ body {
     font-size: var(--font-size-small);
     font-weight: var(--font-weight-medium);
     color: var(--color-brand);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    /* removed text-transform: uppercase — long all-caps runs reduce readability */
+    letter-spacing: 0.02em;
 }
 
 .header-actions {
@@ -315,12 +318,14 @@ body {
     display: inline-flex;
     align-items: center;
     padding: var(--space-1) var(--space-3);
-    background-color: var(--color-brand-subtle);
-    color: var(--color-brand);
-    border: 1px solid var(--color-brand);
+    background-color: transparent;                  /* no fill — not a CTA */
+    color: var(--color-text-muted);                 /* muted = informational */
+    border: 1px solid var(--color-border-strong);   /* neutral outline */
     border-radius: var(--radius-sm);
     font-size: var(--font-size-caption);
     font-weight: var(--font-weight-medium);
+    cursor: default;                                /* non-interactive cursor */
+    user-select: none;
 }
 
 .theme-dropdown {
@@ -394,7 +399,7 @@ body {
 }
 
 .nav-tag {
-    font-size: 0.6875rem;
+    font-size: var(--font-size-caption); /* 12px — was 0.6875rem (11px), below readable floor */
     padding: 1px 4px;
     background-color: var(--color-surface-hover);
     color: var(--color-text-muted);
@@ -419,12 +424,12 @@ body {
 .app-footer {
     background-color: var(--color-surface);
     border-top: 1px solid var(--color-border);
-    padding: var(--space-4) var(--space-6);
+    padding: var(--space-4) var(--layout-gutter);
     margin-top: auto;
 }
 
 .footer-container {
-    max-width: 1400px;
+    max-width: var(--layout-max-width);
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -689,12 +694,13 @@ body {
 }
 
 .btn-secondary {
-    background-color: var(--color-surface-elevated);
+    background-color: transparent;
     color: var(--color-text-primary);
-    border-color: var(--color-border);
+    border-color: var(--color-border-strong); /* visible border = clearly interactive */
 }
 .btn-secondary:hover {
-    background-color: var(--color-surface-hover);
+    background-color: var(--color-surface-elevated);
+    border-color: var(--color-text-muted);
 }
 
 .btn-danger {
@@ -852,9 +858,9 @@ body {
 }
 
 .landing-container {
-    max-width: 1200px;
+    max-width: var(--layout-max-width);
     margin: 0 auto;
-    padding: 0 var(--space-6);
+    padding: 0 var(--layout-gutter);
 }
 
 .landing-hero {
@@ -892,14 +898,23 @@ body {
     gap: var(--space-4);
 }
 
-.hero-btn-main {
+/* Size modifier — use instead of one-off padding overrides */
+.btn-lg {
     padding: var(--space-3) var(--space-6);
     font-size: var(--font-size-body);
 }
 
+.btn-sm {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--font-size-caption);
+}
+
+/* Hero button helpers — layout only, no new visual style */
+.hero-btn-main {
+    text-decoration: none;
+}
+
 .hero-btn-sub {
-    padding: var(--space-3) var(--space-5);
-    font-size: var(--font-size-body);
     text-decoration: none;
 }
 
@@ -931,7 +946,7 @@ body {
 
 .loop-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(3, 1fr); /* was repeat(5,1fr) — ~177px columns are too narrow */
     gap: var(--space-3);
 }
 
@@ -1156,7 +1171,7 @@ body {
         grid-template-columns: 1fr;
     }
     .loop-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr); /* 3-col → 2-col at mid-width */
     }
 }
 
@@ -1189,6 +1204,10 @@ body {
 
     .grid-2, .grid-3, .grid-4 {
         grid-template-columns: 1fr;
+    }
+
+    .loop-grid {
+        grid-template-columns: 1fr; /* single column on mobile */
     }
 
     .hero-actions {
